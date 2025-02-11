@@ -7,8 +7,8 @@ namespace TWC
 {
 struct Completion
 {
-    uint32_t Completed = 0;
-    uint32_t Available = 0;
+    int32_t Completed = 0;
+    int32_t Available = 0;
 
     Completion &operator+=(const Completion &other)
     {
