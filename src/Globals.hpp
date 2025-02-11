@@ -8,7 +8,6 @@
 
 namespace G
 {
-extern HMODULE Module;
 extern AddonAPI *APIDefs;
 extern TWC::Options Options;
 extern TWC::Hooks Hooks;

@@ -1,4 +1,5 @@
 #include "Options.hpp"
+#include "Logging.hpp"
 #include <Globals.hpp>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -6,15 +7,6 @@
 
 namespace TWC
 {
-void to_json(nlohmann::json &j, const IdInclusion &i)
-{
-    j = nlohmann::json{{"id", i.ID}, {"name", i.Name}, {"active", i.Active}};
-}
-
-void from_json(const nlohmann::json &j, IdInclusion &i)
-{
-    i = IdInclusion{j.at("id"), j["name"].get<std::string>().c_str(), j.at("active")};
-}
 void Options::Persist(std::filesystem::path file) const
 {
     try
@@ -49,8 +41,8 @@ void Options::Persist(std::filesystem::path file) const
     }
     catch (const std::exception &e)
     {
-        G::APIDefs->Log(ELogLevel_WARNING, ADDON_NAME, e.what());
-        G::APIDefs->Log(ELogLevel_WARNING, ADDON_NAME, "Unexpected error when persisting options");
+        LOG_FAST(WARNING, e.what());
+        LOG_FAST(WARNING, "Unexpected error when persisting options");
     }
 }
 
@@ -85,9 +77,9 @@ void Options::Parse(std::filesystem::path file)
     }
     catch (const std::exception &e)
     {
-        G::APIDefs->Log(ELogLevel_WARNING, ADDON_NAME, e.what());
-        G::APIDefs->Log(ELogLevel_WARNING, ADDON_NAME,
-                        "Unexpected error when parsing options, falling back to defaults");
+        LOG_FAST(WARNING, e.what());
+        LOG_FAST(WARNING, "Unexpected error when parsing options, falling back to defaults");
+        *this = Options{};
     }
 }
 } // namespace TWC

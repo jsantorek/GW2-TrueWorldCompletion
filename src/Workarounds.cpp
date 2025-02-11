@@ -34,7 +34,6 @@ std::unordered_map<int, int> TWC::Workarounds::MapIdReplacement = {
     {1326, 1327},
 
     // Raids
-    //{1147, 1062}, // 1149 1156 Forsaken Thicket is very special case and handled separately
     {1186, 1188},
     {1325, 1323},
     {1566, 1564},
@@ -56,3 +55,5 @@ std::unordered_map<int, int> TWC::Workarounds::MapIdReplacement = {
 std::unordered_map<int, TWC::MapCompletion> TWC::Workarounds::MapCorrections = {
     // https://wiki.guildwars2.com/wiki/Mists_Arena#Mists_Arena_Spectator_Rally_Point
     {968, TWC::MapCompletion{.Waypoints = TWC::Completion{0, -1}, .Total = TWC::Completion{0, -1}}}};
+
+std::tuple<int, std::array<int, 3>> TWC::Workarounds::ForsakenThicket = {1147, {1062, 1149, 1156}};

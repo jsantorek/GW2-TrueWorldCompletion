@@ -90,10 +90,18 @@ void OptionsRender()
     {
         std::stringstream oss;
         oss << "https://api.guildwars2.com/v2/maps?ids=";
+        auto count = TWC::HttpsMaxMapIdCount;
         for (const auto &[id, comp] : G::Cache.GetAll())
         {
-            if (comp.Total.Completed != comp.Total.Available)
-                oss << id << ",";
+            if (comp.Total.Completed == comp.Total.Available)
+                continue;
+            oss << id << ",";
+            if (!--count)
+            {
+                G::APIDefs->Log(ELogLevel_WARNING, ADDON_NAME,
+                                "Exceeded maximum allowed number of map ids - linking partial results");
+                break;
+            }
         }
         ShellExecute(NULL, "open", oss.str().c_str(), 0, 0, SW_SHOWDEFAULT);
     }

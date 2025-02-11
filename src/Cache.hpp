@@ -26,7 +26,6 @@ class Cache
     {
         std::lock_guard lock(mutex_);
         uint32_t player_ = 0;
-        uint32_t map_ = 0;
         cache_.clear();
         mask_.clear();
     }
@@ -51,7 +50,7 @@ class Cache
     inline void Set(uint32_t mapId, MapCompletion *comp)
     {
         std::lock_guard lock(mutex_);
-        if (mapId != map_ || comp->Total.Completed == comp->Total.Available)
+        if (comp->Total.Completed == comp->Total.Available)
             cache_.emplace(mapId, *comp);
     }
 
@@ -66,6 +65,5 @@ class Cache
     std::unordered_map<uint32_t, MapCompletion> cache_;
     std::mutex mutex_;
     uint32_t player_;
-    uint32_t map_;
 };
 } // namespace TWC
