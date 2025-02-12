@@ -35,7 +35,7 @@ extern "C" __declspec(dllexport) AddonDefinition *GetAddonDef()
         .Description = "Seamless display within game map, includes all zones of all expansions and living worlds.",
         .Load = AddonLoad,
         .Unload = AddonUnload,
-        .Flags = EAddonFlags_IsVolatile,
+        .Flags = EAddonFlags_None,
         .Provider = EUpdateProvider_GitHub,
         .UpdateLink = "https://github.com/jsantorek/GW2-TrueWorldCompletion"};
     return &def;
@@ -103,7 +103,10 @@ void OptionsRender()
                 break;
             }
         }
-        ShellExecute(NULL, "open", oss.str().c_str(), 0, 0, SW_SHOWDEFAULT);
+        if (count != TWC::HttpsMaxMapIdCount)
+            ShellExecute(0, 0, oss.str().c_str(), 0, 0, SW_SHOW);
+        else
+            G::APIDefs->UI.SendAlert("No incomplete maps found!");
     }
 
     ImGui::TextUnformatted("Optional map inclusion list");

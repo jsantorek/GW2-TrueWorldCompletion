@@ -50,8 +50,7 @@ class Cache
     inline void Set(uint32_t mapId, MapCompletion *comp)
     {
         std::lock_guard lock(mutex_);
-        if (comp->Total.Completed == comp->Total.Available)
-            cache_.emplace(mapId, *comp);
+        cache_.emplace(mapId, *comp);
     }
 
     inline std::unordered_map<uint32_t, MapCompletion> GetAll()
