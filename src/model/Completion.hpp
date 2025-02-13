@@ -26,6 +26,6 @@ struct Completion
 
 inline Completion operator+(const Completion &a, const Completion &b)
 {
-    return Completion{.Completed = a.Completed + b.Completed, .Available = a.Available + b.Available};
+    return Completion{a.Completed + b.Completed, a.Available + b.Available};
 }
 } // namespace TWC

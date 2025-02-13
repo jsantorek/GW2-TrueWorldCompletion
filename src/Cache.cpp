@@ -3,7 +3,7 @@
 
 void TWC::Cache::EnsureValidity(uint32_t playerId)
 {
-    std::lock_guard lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     if (player_ == playerId && !mask_.empty())
         return;
     cache_.clear();
