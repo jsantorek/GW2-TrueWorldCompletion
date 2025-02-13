@@ -74,7 +74,7 @@ void OptionsRender()
         for (auto exp = TWC::ContinentsAndExpansionsEnumeration::Core;
              G::Options.WorldCompletion == TWC::WorldCompletionMode::SeparatesContinentsAndExpansions &&
              exp < TWC::ContinentsAndExpansionsEnumeration::ToBeDetermined;
-             exp = TWC::ContinentsAndExpansionsEnumeration{(uint32_t)exp + 1})
+             exp = TWC::ContinentsAndExpansionsEnumeration{static_cast<uint32_t>(exp) + 1})
             ImGui::Checkbox(G::Options.ContinentsAndExpansionsInclusions[exp].Name,
                             &G::Options.ContinentsAndExpansionsInclusions[exp].Active);
         ImGui::Separator();
