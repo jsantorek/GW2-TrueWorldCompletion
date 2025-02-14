@@ -37,8 +37,8 @@ extern "C" __declspec(dllexport) AddonDefinition *GetAddonDef()
         .Load = AddonLoad,
         .Unload = AddonUnload,
         .Flags = EAddonFlags_None,
-        /*.Provider = EUpdateProvider_GitHub,
-        .UpdateLink = "https://github.com/jsantorek/GW2-TrueWorldCompletion"*/};
+        .Provider = EUpdateProvider_GitHub,
+        .UpdateLink = "https://github.com/jsantorek/GW2-TrueWorldCompletion"};
     return &def;
 }
 
