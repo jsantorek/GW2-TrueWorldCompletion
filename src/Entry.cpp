@@ -140,5 +140,6 @@ void AddonUnload()
     const auto addonDir = std::filesystem::path(G::APIDefs->Paths.GetAddonDirectory(ADDON_NAME));
     G::Options.Persist(addonDir / TWC::ConfigFilename);
     G::Hooks.Uninstall();
+    G::Cache.Invalidate();
     G::APIDefs->Renderer.Deregister(OptionsRender);
 }
