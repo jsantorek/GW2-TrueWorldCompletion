@@ -31,14 +31,14 @@ extern "C" __declspec(dllexport) AddonDefinition *GetAddonDef()
         .Signature = 0x776E7A31,
         .APIVersion = NEXUS_API_VERSION,
         .Name = "True World Completion",
-        .Version = {ADDON_VERSION_MAJOR, ADDON_VERSION_MINOR, ADDON_VERSION_PATCH, ADDON_VERSION_REVISION},
+        .Version = AddonVersion{ADDON_VERSION_MAJOR, ADDON_VERSION_MINOR, ADDON_VERSION_PATCH, ADDON_VERSION_REVISION},
         .Author = "Vonsh.1427",
         .Description = "Seamless display within game map, includes all zones of all expansions and living worlds.",
         .Load = AddonLoad,
         .Unload = AddonUnload,
         .Flags = EAddonFlags_None,
-        .Provider = EUpdateProvider_GitHub,
-        .UpdateLink = "https://github.com/jsantorek/GW2-TrueWorldCompletion"};
+        /*.Provider = EUpdateProvider_GitHub,
+        .UpdateLink = "https://github.com/jsantorek/GW2-TrueWorldCompletion"*/};
     return &def;
 }
 
@@ -105,7 +105,7 @@ void OptionsRender()
             }
         }
         if (count != TWC::HttpsMaxMapIdCount)
-            ShellExecute(0, 0, oss.str().c_str(), 0, 0, SW_SHOW);
+            ShellExecute(nullptr, 0, oss.str().c_str(), 0, 0, SW_SHOW);
         else
             G::APIDefs->UI.SendAlert("No incomplete maps found!");
     }
