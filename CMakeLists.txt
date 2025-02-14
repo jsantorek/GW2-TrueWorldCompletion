@@ -45,7 +45,7 @@ target_include_directories(${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${RE_INCLUDE_DIRS}
 )
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "True_World_Completion")
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION "."
 )

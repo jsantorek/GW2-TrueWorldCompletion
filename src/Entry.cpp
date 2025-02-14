@@ -38,7 +38,7 @@ extern "C" __declspec(dllexport) AddonDefinition *GetAddonDef()
         .Unload = AddonUnload,
         .Flags = EAddonFlags_None,
         .Provider = EUpdateProvider_GitHub,
-        .UpdateLink = "https://github.com/jsantorek/GW2-TrueWorldCompletion"};
+        .UpdateLink = "https://github.com/jsantorek/GW2-" ADDON_NAME};
     return &def;
 }
 
@@ -105,7 +105,7 @@ void OptionsRender()
             }
         }
         if (count != TWC::HttpsMaxMapIdCount)
-            ShellExecute(nullptr, 0, oss.str().c_str(), 0, 0, SW_SHOW);
+            ShellExecute(nullptr, nullptr, oss.str().c_str(), nullptr, nullptr, SW_SHOW);
         else
             G::APIDefs->UI.SendAlert("No incomplete maps found!");
     }
@@ -127,7 +127,7 @@ void AddonLoad(AddonAPI *aApi)
 
     const auto addonDir = std::filesystem::path(G::APIDefs->Paths.GetAddonDirectory(ADDON_NAME));
     G::Options.Parse(addonDir / TWC::ConfigFilename);
-    ImGui::SetCurrentContext((ImGuiContext *)G::APIDefs->ImguiContext);
+    ImGui::SetCurrentContext(reinterpret_cast<ImGuiContext *>(G::APIDefs->ImguiContext));
     ImGui::SetAllocatorFunctions((void *(*)(size_t, void *))G::APIDefs->ImguiMalloc,
                                  (void (*)(void *, void *))G::APIDefs->ImguiFree);
 

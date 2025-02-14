@@ -48,13 +48,13 @@ void Options::Persist(std::filesystem::path file) const
 
 void Options::Parse(std::filesystem::path file)
 {
+    *this = Options{};
+    if (!std::filesystem::exists(file))
+        return;
     try
     {
         auto json = nlohmann::json::object();
-        if (std::filesystem::exists(file))
-        {
-            json = nlohmann::json::parse(std::ifstream(file), nullptr, false);
-        }
+        json = nlohmann::json::parse(std::ifstream(file), nullptr, false);
         WorldCompletion = json.value("WorldCompletion", WorldCompletion);
         const auto ExcludedMaps = json["ExcludedMaps"].get<std::set<int>>();
         for (auto &[key, inclusions] : MapInclusions)
@@ -79,7 +79,6 @@ void Options::Parse(std::filesystem::path file)
     {
         LOG_FAST(WARNING, e.what());
         LOG_FAST(WARNING, "Unexpected error when parsing options, falling back to defaults");
-        *this = Options{};
     }
 }
 } // namespace TWC
