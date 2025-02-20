@@ -6,7 +6,7 @@
 #include <Nexus.h>
 #include <imgui.h>
 
-BOOL WINAPI DllMain(_In_ HINSTANCE hinstDLL, _In_ DWORD fdwReason, _In_ LPVOID lpvReserved)
+BOOL WINAPI DllMain(_In_ HINSTANCE hinstDLL, _In_ DWORD fdwReason, _In_ LPVOID)
 {
     switch (fdwReason)
     {
@@ -24,8 +24,10 @@ BOOL WINAPI DllMain(_In_ HINSTANCE hinstDLL, _In_ DWORD fdwReason, _In_ LPVOID l
 
 void AddonLoad(AddonAPI *aApi);
 void AddonUnload();
+void OptionsRender();
+extern "C" __declspec(dllexport) AddonDefinition *GetAddonDef();
 
-extern "C" __declspec(dllexport) AddonDefinition *GetAddonDef()
+AddonDefinition *GetAddonDef()
 {
     static AddonDefinition def{
         .Signature = 0x776E7A31,

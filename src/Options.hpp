@@ -6,7 +6,7 @@ namespace TWC
 {
 struct IdInclusion
 {
-    int ID;
+    uint32_t ID;
     const char *Name;
     bool Active = true;
 };
