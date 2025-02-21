@@ -1,59 +1,115 @@
 #include "Workarounds.hpp"
-#include "model/Completion.hpp"
 
-std::unordered_map<int, int> TWC::Workarounds::MapIdReplacement = {
-    // Guild Halls' Hover
-    {1119, 1121},
-    {1141, 1124},
-    {1215, 1232},
-    {1417, 1462},
+/*
+TODO:
+901 Molten Furnace
+915 Aetherblade Retreat
+    some LWS1 stuff...? can it be discovered in fractals?
+*/
 
-    // Guild Halls' Duplicates
-    {1068, 1121},
-    {1101, 1121},
-    {1107, 1121},
-    {1108, 1121},
-    {1125, 1121},
-    {1069, 1124},
-    {1071, 1124},
-    {1076, 1124},
-    {1104, 1124},
-    {1144, 1124},
-    {1214, 1232},
-    {1224, 1232},
-    {1243, 1232},
-    {1250, 1232},
-    {1419, 1462},
-    {1426, 1462},
-    {1435, 1462},
-    {1444, 1462},
+std::optional<TWC::CustomCompletion> TWC::Workarounds::GetCustomCompletion(uint32_t id)
+{
+    switch (id)
+    {
+    case 67: // Twilight Arbor
+        return CustomCompletion{.BaseMaps = {
+                                    67, // Twilight Arbor (Story)
+                                    68  // Twilight Arbor (Explorable)
+                                }};
+    case 71: // Honor of the Waves
+        return CustomCompletion{.BaseMaps = {
+                                    70, // Honor of the Waves (Story)
+                                    71  // Honor of the Waves (Explorable)
+                                }};
+    case 968: // Edge of the Mists
+        return CustomCompletion{
+            .BaseMaps = {968},
+            .PoiExclusions = {
+                // unavailable
+                3204 // https://wiki.guildwars2.com/wiki/Mists_Arena#Mists_Arena_Spectator_Rally_Point
+            }};
+    case 1147: // Forsaken Thicket
+        return CustomCompletion{.BaseMaps = {
+                                    1062, // Spirit Vale
+                                    1149, // Salvation Pass
+                                    1156  // Stronghold of the Faithful
+                                }};
+    case 1413: // The Twisted Marionette (Public)
+        return CustomCompletion{.BaseMaps = {1413},
+                                .PoiExclusions = {
+                                    // duplicates from Lornar's Pass
+                                    283, // https://wiki.guildwars2.com/wiki/Winterthaw_Snowfield#Winterthaw_Waypoint
+                                    282  // https://wiki.guildwars2.com/wiki/False_River_Valley#False_River_Waypoint
+                                }};
+    case 1477: // The Tower of Nightmares (Private Squad)
+        return CustomCompletion{.BaseMaps = {1477},
+                                .PoiExclusions = {
+                                    // duplicate from The Tower of Nightmares (Public)
+                                    1839 // https://wiki.guildwars2.com/wiki/First_Level#Tower_of_Nightmares_Waypoint
+                                }};
+    case 943: // The Tower of Nightmares (Public)
+        return CustomCompletion{.BaseMaps = {943},
+                                .PoiExclusions = {
+                                    // duplicate from The Tower of Nightmares (Private Squad)
+                                    3457 // https://wiki.guildwars2.com/wiki/First_Level#Tower_of_Nightmares_Waypoint
+                                }};
+    default:
+        return std::nullopt;
+    }
+}
 
-    // private/public instance duplicates
-    {1478, 1482},
-    {943, 1477},
-    {1326, 1327},
+std::optional<uint32_t> TWC::Workarounds::GetMapIdReplacement(uint32_t id)
+{
+    switch (id)
+    {
+        /* clang-format off */
 
-    // Raids
-    {1186, 1188},
-    {1325, 1323},
-    {1566, 1564},
-    {1562, 1564},
+        // Story Mode dungeons should use Exploration Mode maps' completion
+        case   33: return   36; // Ascalonian Catacombs
+        case   63: return   64; // Sorrow's Embrace
+        case   68: return   67; // Twilight Arbor
+        case   66: return   69; // Citadel of Flame
+        case   70: return   71; // Honor of the Waves
+        case   75: return   76; // Caudecus's Manor
+        case   81: return   82; // Crucible of Eternity
 
-    // Fahranur
-    {1268, 1307},
+        // Verdant Brink's duplicate should use regular map's completion
+        case 1042: return 1052;
 
-    // Toypokalipse
-    {880, 1270},
+        // Eye of the North accessible from Hall of Monuments Portal Stone should use
+        // Icebrood's Saga Eye of the North's completion 
+        case  807: return 1370;
 
-    // Crucible of Eternity
-    {81, 82},
+        // The Twisted Marionette (Private Squad) should use
+        // The Twisted Marionette (Public)'s completion
+        case 1414: return 1413;
 
-    // Verdank Brink
-    {1042, 1052},
-};
+        /* clang-format on */
 
-std::unordered_map<int, TWC::MapCompletion> TWC::Workarounds::MapCorrections = {
-    // https://wiki.guildwars2.com/wiki/Mists_Arena#Mists_Arena_Spectator_Rally_Point
-    {968, TWC::MapCompletion{.Waypoints = TWC::Completion{0, -1}, .Total = TWC::Completion{0, -1}}}};
+    default:
+        return std::nullopt;
+    }
+}
 
-std::tuple<int, std::array<int, 3>> TWC::Workarounds::ForsakenThicket = {1147, {1062, 1149, 1156}};
+bool TWC::Workarounds::ShouldSkipContentValidation(uint32_t id)
+{
+    switch (id)
+    {
+    // Exploration Mode Dungeon Maps are fine despite using Story Mode Map components
+    case 36:
+    case 64:
+    case 69:
+    case 76:
+    case 82:
+
+    // Memory of Old Lion's Arch is fine despite using Lion's Arch components
+    case 1483:
+
+    // Icebrood's Sage Eye of the North is fine despite using
+    // Eye of the North accessible from Hall of Monuments Portal Stone components
+    case 1370:
+        return true;
+    default:
+        return false;
+    }
+}
