@@ -46,22 +46,20 @@ AddonDefinition *GetAddonDef()
 
 void OptionsRender()
 {
-    const char *WorldCompletionNames[TWC::WorldCompletionMode::Count];
-    WorldCompletionNames[TWC::WorldCompletionMode::CombinesAllMaps] = "totality of all maps";
-    WorldCompletionNames[TWC::WorldCompletionMode::CombinesAllExplorableMaps] =
-        "totality of maps with completion reward";
-    WorldCompletionNames[TWC::WorldCompletionMode::SeparatesContinents] = "separate for The Mists and Tyria";
-    WorldCompletionNames[TWC::WorldCompletionMode::SeparatesContinentsAndExpansions] =
-        "separate for The Mists and each expansion cycle";
-    WorldCompletionNames[TWC::WorldCompletionMode::Chronological] =
-        "separate for The Mists and Tyria but excludes expansion cycles subsequent to current map";
-
+    constexpr std::array<const char *, 6> WorldCompletionNames = {
+        "totality of all maps",
+        "totality of maps with completion reward",
+        "separate for The Mists and Tyria",
+        "separate for The Mists and each expansion cycle",
+        "separate for The Mists and Tyria but excludes expansion cycles subsequent to current map",
+        "separate for each region"};
     ImGui::TextUnformatted("World completion is...");
-    ImGui::Combo("##World completion", &G::Options.WorldCompletion, WorldCompletionNames,
-                 TWC::WorldCompletionMode::Count);
+    ImGui::Combo("##World completion", &G::Options.WorldCompletion, WorldCompletionNames.data(),
+                 WorldCompletionNames.size());
     ImGui::Separator();
     if (G::Options.WorldCompletion != TWC::WorldCompletionMode::CombinesAllMaps &&
-        G::Options.WorldCompletion != TWC::WorldCompletionMode::CombinesAllExplorableMaps)
+        G::Options.WorldCompletion != TWC::WorldCompletionMode::CombinesAllExplorableMaps &&
+        G::Options.WorldCompletion != TWC::WorldCompletionMode::SeparatesRegions)
     {
         ImGui::TextUnformatted("World completion progress is displayed in...");
         ImGui::Checkbox(
@@ -110,6 +108,12 @@ void OptionsRender()
             ShellExecute(nullptr, nullptr, oss.str().c_str(), nullptr, nullptr, SW_SHOW);
         else
             G::APIDefs->UI.SendAlert("No incomplete maps found!");
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Report an issue"))
+    {
+        ShellExecute(nullptr, nullptr, "https://github.com/jsantorek/GW2-TrueWorldCompletion/issues", nullptr, nullptr,
+                     SW_SHOW);
     }
 
     ImGui::TextUnformatted("Optional map inclusion list");

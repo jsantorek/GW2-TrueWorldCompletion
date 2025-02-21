@@ -38,8 +38,7 @@ enum WorldCompletionMode : int
     SeparatesContinents,
     SeparatesContinentsAndExpansions,
     Chronological,
-
-    Count
+    SeparatesRegions
 };
 enum ContinentsAndExpansionsEnumeration : uint32_t
 {
@@ -73,10 +72,12 @@ struct Options
     std::unordered_map<const char *, std::vector<IdInclusion>> MapInclusions = {
         {"Gemstore exclusive",
          {
+             IdInclusion{1206, "Mistlock Sanctuary"},
              IdInclusion{1315, "Armistice Bastion"},
              IdInclusion{1465, "Thousand Seas Pavilion"},
          }},
-        {"Story exclusive", {IdInclusion{335, "Claw Island"}}},
+        {"Story exclusive", {IdInclusion{335, "Claw Island"}, IdInclusion{111, "Victory or Death"}}},
+        {"Historical", {IdInclusion{901, "Molten Furnace"}, IdInclusion{915, "Aetherblade Retreat"}}},
         {"Wintersday Celebration",
          {
              IdInclusion{877, "Snowball Mayhem"},
@@ -90,6 +91,20 @@ struct Options
              IdInclusion{866, "Mad King's Labyrinth"},
              IdInclusion{1304, "Mad King's Raceway"},
              IdInclusion{1316, "Mists Rift"},
+         }},
+        {"Lunar New Year",
+         {
+             IdInclusion{911, "Dragon Ball Arena"},
+         }},
+        {"Festival of the Four Winds",
+         {
+             IdInclusion{918, "Aspect Arena"},
+             IdInclusion{922, "Labyrinthine Cliffs"},
+             IdInclusion{929, "The Crown Pavilion"},
+         }},
+        {"Super Adventure Box",
+         {
+             IdInclusion{935, "Hub"},
          }}};
 
     void Persist(std::filesystem::path filepath) const;
