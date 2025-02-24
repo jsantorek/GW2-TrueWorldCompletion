@@ -11,6 +11,15 @@ std::optional<TWC::CustomCompletion> TWC::Workarounds::GetCustomCompletion(uint3
 {
     switch (id)
     {
+    case 36: // Ascalonian Catacombs
+        return CustomCompletion{.BaseMaps =
+                                    {
+                                        33, // Ascalonian Catacombs (Story)
+                                        36  // Ascalonian Catacombs (Explorable)
+                                    },
+                                .PoiExclusions = {
+                                    942 // https://wiki.guildwars2.com/wiki/Kasha%27s_Tomb_Waypoint
+                                }};
     case 67: // Twilight Arbor
         return CustomCompletion{.BaseMaps = {
                                     67, // Twilight Arbor (Story)
@@ -83,6 +92,13 @@ std::optional<uint32_t> TWC::Workarounds::GetMapIdReplacement(uint32_t id)
         // The Twisted Marionette (Private Squad) should use
         // The Twisted Marionette (Public)'s completion
         case 1414: return 1413;
+        
+        // All of the Mount Balrior copies should use
+        // Mount Balriors' completion
+        case 1566: return 1564; // Map label mouse hover
+        case 1562: return 1564; // Convergence: Mount Balrior (Private Squad)
+        case 1571: return 1564; // Convergence: Mount Balrior (Public)
+        case 1572: return 1564; // Balrior Peak: Mount Balrior
 
         /* clang-format on */
 
@@ -96,7 +112,6 @@ bool TWC::Workarounds::ShouldSkipContentValidation(uint32_t id)
     switch (id)
     {
     // Exploration Mode Dungeon Maps are fine despite using Story Mode Map components
-    case 36:
     case 64:
     case 69:
     case 76:
@@ -108,6 +123,10 @@ bool TWC::Workarounds::ShouldSkipContentValidation(uint32_t id)
     // Icebrood's Sage Eye of the North is fine despite using
     // Eye of the North accessible from Hall of Monuments Portal Stone components
     case 1370:
+
+    // Mount Balrior is fine despite using
+    // Convergence: Mount Balrior (Private Squad) components
+    case 1564:
         return true;
     default:
         return false;

@@ -4,7 +4,6 @@
 #include "Options.hpp"
 #include <Hooks.hpp>
 #include <Nexus.h>
-#include <windows.h>
 
 namespace G
 {
