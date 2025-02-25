@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <unordered_map>
 #include <vector>
+
 namespace TWC
 {
 struct IdInclusion
@@ -10,27 +11,7 @@ struct IdInclusion
     const char *Name;
     bool Active = true;
 };
-/*
-World completion: (unmodded: combines all maps required for Gift of Exploration)
-Combines all maps
-Separates Mists and Tyria
-Separates Mists and each expansion cycle on Tyria
-Excludes expansion cycles subsequent to current map
-Excludes maps without completion reward
 
-World completion is displayed: (unmodded: when on map required for Gift of Exploration)
-Always
-If current map contributes to World completion
-
-Map completion is displayed for maps: (unmodded: with completion reward)
-with discoverable points
-contributing to World completion
-
-Explicitly include maps:
-//
-Explicitly include pois:
-
-*/
 enum WorldCompletionMode : int
 {
     CombinesAllMaps,
@@ -40,6 +21,7 @@ enum WorldCompletionMode : int
     Chronological,
     SeparatesRegions
 };
+
 enum ContinentsAndExpansionsEnumeration : uint32_t
 {
     Undetermined = 0,
