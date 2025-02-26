@@ -36,8 +36,9 @@ enum ContinentsAndExpansionsEnumeration : uint32_t
     ToBeDetermined
 };
 
-struct Options
+class Options
 {
+  public:
     int WorldCompletion = CombinesAllMaps;
 
     std::unordered_map<ContinentsAndExpansionsEnumeration, IdInclusion> ContinentsAndExpansionsInclusions = {
@@ -89,7 +90,12 @@ struct Options
              IdInclusion{935, "Hub"},
          }}};
 
-    void Persist(std::filesystem::path filepath) const;
-    void Parse(std::filesystem::path filepath);
+    ~Options();
+    Options(std::filesystem::path filepath);
+    void Persist() const;
+    static void Render();
+
+  private:
+    std::filesystem::path _filepath;
 };
 } // namespace TWC
