@@ -1,5 +1,6 @@
 #pragma once
 #include <filesystem>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -36,22 +37,54 @@ enum ContinentsAndExpansionsEnumeration : uint32_t
     ToBeDetermined
 };
 
+constexpr std::string_view to_string(ContinentsAndExpansionsEnumeration e)
+{
+    switch (e)
+    {
+    case Undetermined:
+        return "Undetermined";
+    case TheMists:
+        return "The Mists";
+    case Tyria:
+        return "Tyria";
+    case Core:
+        return "Central Tyria";
+    case HeartOfThorns:
+        return "Heart of Thorns";
+    case PathOfFire:
+        return "Path of Fire";
+    case EndOfDragons:
+        return "End of Dragons";
+    case SecretsOfTheObscure:
+        return "Secrets of the Obscure";
+    case JanthirWilds:
+        return "Janthir Wilds";
+    default:
+        break;
+    }
+    return "?";
+}
+constexpr int to_int(ContinentsAndExpansionsEnumeration e)
+{
+    return static_cast<int>(e);
+}
+
 class Options
 {
   public:
     int WorldCompletion = CombinesAllMaps;
 
     std::unordered_map<ContinentsAndExpansionsEnumeration, IdInclusion> ContinentsAndExpansionsInclusions = {
-        {Undetermined, IdInclusion{Undetermined, "Undetermined", false}},
-        {Tyria, IdInclusion{Tyria, "Tyria"}},
-        {TheMists, IdInclusion{TheMists, "The Mists"}},
-        {Core, IdInclusion{Core, "Core"}},
-        {HearOfThorns, IdInclusion{HearOfThorns, "Heart of Thorns"}},
-        {PathOfFire, IdInclusion{PathOfFire, "Path of Fire"}},
-        {EndOfDragons, IdInclusion{EndOfDragons, "End of Dragons"}},
-        {SecretsOfTheObscure, IdInclusion{SecretsOfTheObscure, "Secrets of the Obscure"}},
-        {JanthirWilds, IdInclusion{JanthirWilds, "Janthir Wilds"}},
+        {Tyria, IdInclusion{Tyria, to_string(Tyria).data()}},
+        {TheMists, IdInclusion{TheMists, to_string(TheMists).data()}},
+        {Core, IdInclusion{Core, to_string(Core).data()}},
+        {HeartOfThorns, IdInclusion{HeartOfThorns, to_string(HeartOfThorns).data()}},
+        {PathOfFire, IdInclusion{PathOfFire, to_string(PathOfFire).data()}},
+        {EndOfDragons, IdInclusion{EndOfDragons, to_string(EndOfDragons).data()}},
+        {SecretsOfTheObscure, IdInclusion{SecretsOfTheObscure, to_string(SecretsOfTheObscure).data()}},
+        {JanthirWilds, IdInclusion{JanthirWilds, to_string(JanthirWilds).data()}},
     };
+
     std::unordered_map<const char *, std::vector<IdInclusion>> MapInclusions = {
         {"Gemstore exclusive",
          {
