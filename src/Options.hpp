@@ -25,10 +25,10 @@ enum WorldCompletionMode : int
 enum ContinentsAndExpansionsEnumeration : uint32_t
 {
     Undetermined = 0,
-    TheMists = 1,
-    Tyria = 2,
+    Tyria = 1,
+    TheMists = 2,
     Core = 3,
-    HearOfThorns = 4,
+    HeartOfThorns = 4,
     PathOfFire = 5,
     EndOfDragons = 6,
     SecretsOfTheObscure = 7,
