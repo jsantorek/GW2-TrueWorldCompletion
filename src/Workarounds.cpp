@@ -82,6 +82,9 @@ std::optional<uint32_t> TWC::Workarounds::GetMapIdReplacement(uint32_t id)
         case   75: return   76; // Caudecus's Manor
         case   81: return   82; // Crucible of Eternity
 
+        // Confessor's End should use Caudecus's Manor completion
+        case 1191: return 76;
+
         // Verdant Brink's duplicate should use regular map's completion
         case 1042: return 1052;
 
