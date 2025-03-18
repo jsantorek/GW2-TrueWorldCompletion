@@ -1,7 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <iomanip>
 #include <ostream>
+#include <sstream>
 
 namespace TWC
 {
@@ -35,6 +37,14 @@ struct Completion
         if (Completed >= Available)
             return 255;
         return static_cast<uint8_t>(254.0f * static_cast<float>(*this));
+    }
+
+    template <typename T> operator std::basic_string<T, std::char_traits<T>, std::allocator<T>>()
+    {
+        std::basic_stringstream<T, std::char_traits<T>, std::allocator<T>> os;
+        os << std::fixed << std::setprecision(1)
+           << 100.0f * static_cast<float>(Completed) / static_cast<float>(Available) << "%";
+        return os.str();
     }
 };
 

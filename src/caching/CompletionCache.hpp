@@ -1,6 +1,5 @@
 #pragma once
 #include "model/MapCompletion.hpp"
-#include <guiddef.h>
 #include <mutex>
 #include <unordered_map>
 
@@ -34,6 +33,6 @@ class CompletionCache
   private:
     std::unordered_map<uint32_t, MapCompletion> completion_;
     std::mutex mutex_;
-    GUID player_;
+    std::string player_;
 };
 } // namespace TWC

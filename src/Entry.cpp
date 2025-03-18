@@ -6,22 +6,6 @@
 #include <Nexus.h>
 #include <imgui.h>
 
-BOOL WINAPI DllMain(_In_ HINSTANCE hinstDLL, _In_ DWORD fdwReason, _In_ LPVOID)
-{
-    switch (fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hinstDLL);
-        break;
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-    case DLL_PROCESS_DETACH:
-    default:
-        break;
-    }
-    return TRUE;
-}
-
 void AddonLoad(AddonAPI *aApi);
 void AddonUnload();
 extern "C" __declspec(dllexport) AddonDefinition *GetAddonDef();
@@ -52,8 +36,17 @@ void AddonLoad(AddonAPI *aApi)
     G::Cache::Content = new TWC::ContentCache();
     G::Cache::Completion = new TWC::CompletionCache();
     const auto addonDir = std::filesystem::path(G::APIDefs->Paths.GetAddonDirectory(ADDON_NAME));
+    G::Cache::Characters = TWC::CharacterCache::Load(addonDir / TWC::CacheFilename);
     G::Options = new TWC::Options(addonDir / TWC::ConfigFilename);
-    G::Hooks.Install();
+    try
+    {
+        G::Hooks.Install();
+    }
+    catch (const std::runtime_error &e)
+    {
+        G::APIDefs->Log(ELogLevel_CRITICAL, ADDON_NAME, e.what());
+        G::APIDefs->Log(ELogLevel_CRITICAL, ADDON_NAME, "Addon remains disabled!");
+    }
 }
 
 void AddonUnload()

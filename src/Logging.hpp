@@ -29,4 +29,5 @@ template <ELogLevel level> struct ScopedLogging
 #define LOG_TRACE() ScopedLogging<ELogLevel_TRACE>(G::APIDefs->Log, __func__).stream()
 #define LOG_DEBUG() ScopedLogging<ELogLevel_DEBUG>(G::APIDefs->Log, __func__).stream()
 #define LOG_CRITICAL() ScopedLogging<ELogLevel_CRITICAL>(G::APIDefs->Log, __func__).stream()
+#define LOG_INFO() ScopedLogging<ELogLevel_INFO>(G::APIDefs->Log, __func__).stream()
 #define LOG_FAST(level, msg) G::APIDefs->Log(ELogLevel_##level, ADDON_NAME, msg)

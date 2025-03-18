@@ -21,6 +21,7 @@ class ContentCache
     {
         std::lock_guard<std::mutex> lock(mutex_);
         content_.clear();
+        // TODO: replace EnsureValidity with EnqueuValidationJob
     }
 
     void EnsureValidity();
