@@ -2,4 +2,6 @@ build
 .conan
 .venv
 .vscode
+style.css
+clang
 CMakeUserPresets.json

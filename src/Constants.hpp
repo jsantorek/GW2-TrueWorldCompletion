@@ -6,5 +6,8 @@ static constexpr auto WorldMapProgressWidgetWidthMultiplier = 1.2f;
 static constexpr auto ConfigFilename = "config.json";
 static constexpr auto CacheFilename = "cache.json";
 static constexpr auto HttpsMaxMapIdCount = 200;
-static constexpr auto CompletionCacheVersion = 1;
+static constexpr auto CacheVersion = 1;
+static constexpr auto ConfigVersion = 1;
+static constexpr auto CharacterSelectionCompletionFormat = L"[{}/{}] {:.1f}%";
+static constexpr auto WorldCompletionProgressBarFormat = L"{:.1f}%";
 } // namespace TWC

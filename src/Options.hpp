@@ -1,90 +1,16 @@
 #pragma once
-#include <filesystem>
-#include <string_view>
+#include "model/IdInclusion.hpp"
+#include "model/MapClassification.hpp"
+#include <cstdint>
+#include <optional>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace TWC
 {
-struct IdInclusion
+struct WorldCompletionConfig
 {
-    uint32_t ID;
-    const char *Name;
-    bool Active = true;
-};
-
-enum WorldCompletionMode : int
-{
-    CombinesAllMaps,
-    CombinesAllExplorableMaps,
-    SeparatesContinents,
-    SeparatesContinentsAndExpansions,
-    Chronological,
-    SeparatesRegions
-};
-
-enum ContinentsAndExpansionsEnumeration : uint32_t
-{
-    Undetermined = 0,
-    Tyria = 1,
-    TheMists = 2,
-    Core = 3,
-    HeartOfThorns = 4,
-    PathOfFire = 5,
-    EndOfDragons = 6,
-    SecretsOfTheObscure = 7,
-    JanthirWilds = 8,
-    ToBeDetermined
-};
-
-constexpr std::string_view to_string(ContinentsAndExpansionsEnumeration e)
-{
-    switch (e)
-    {
-    case Undetermined:
-        return "Undetermined";
-    case TheMists:
-        return "The Mists";
-    case Tyria:
-        return "Tyria";
-    case Core:
-        return "Central Tyria";
-    case HeartOfThorns:
-        return "Heart of Thorns";
-    case PathOfFire:
-        return "Path of Fire";
-    case EndOfDragons:
-        return "End of Dragons";
-    case SecretsOfTheObscure:
-        return "Secrets of the Obscure";
-    case JanthirWilds:
-        return "Janthir Wilds";
-    default:
-        break;
-    }
-    return "?";
-}
-constexpr int to_int(ContinentsAndExpansionsEnumeration e)
-{
-    return static_cast<int>(e);
-}
-
-class Options
-{
-  public:
-    int WorldCompletion = CombinesAllMaps;
-
-    std::unordered_map<ContinentsAndExpansionsEnumeration, IdInclusion> ContinentsAndExpansionsInclusions = {
-        {Tyria, IdInclusion{Tyria, to_string(Tyria).data()}},
-        {TheMists, IdInclusion{TheMists, to_string(TheMists).data()}},
-        {Core, IdInclusion{Core, to_string(Core).data()}},
-        {HeartOfThorns, IdInclusion{HeartOfThorns, to_string(HeartOfThorns).data()}},
-        {PathOfFire, IdInclusion{PathOfFire, to_string(PathOfFire).data()}},
-        {EndOfDragons, IdInclusion{EndOfDragons, to_string(EndOfDragons).data()}},
-        {SecretsOfTheObscure, IdInclusion{SecretsOfTheObscure, to_string(SecretsOfTheObscure).data()}},
-        {JanthirWilds, IdInclusion{JanthirWilds, to_string(JanthirWilds).data()}},
-    };
-
     std::unordered_map<const char *, std::vector<IdInclusion>> MapInclusions = {
         {"Gemstore exclusive",
          {
@@ -122,13 +48,54 @@ class Options
          {
              IdInclusion{935, "Hub"},
          }}};
+    std::vector<uint32_t> MapExclusions = {};
+    std::vector<uint32_t> RegionExclusions = {};
+    std::vector<IdInclusion> RegionInclusions{
+        IdInclusion{6, "Player vs. Player"},
+        IdInclusion{7, "World vs. World"},
+    };
 
+    MapClassification::WorldDivisionMode MapSeparation = MapClassification::AllMapsCollectively;
+
+    MapClassification::ExpansionAssignmentMode ExpansionAssignment = MapClassification::MapAccessibility;
+
+    bool IncludeMapsWithoutCompletionReward = true;
+
+    std::unordered_set<uint32_t> GetExcludedMapIds() const;
+    std::unordered_set<uint32_t> GetExcludedRegionIds() const;
+};
+
+class Options
+{
+  public:
     ~Options();
-    Options(std::filesystem::path filepath);
+    Options();
+
     void Persist() const;
-    static void Render();
+
+    uint32_t GetMapProgressBarColour(MapClassification classification) const;
+
+    uint32_t GetWorldProgressBarColour(MapClassification classification) const;
+
+    uint32_t GetWorldProgressBarTitle(MapClassification classification) const;
+
+    bool DefaultColorScheme = false;
+    WorldCompletionConfig WorldProgressWidget = {};
+    std::optional<WorldCompletionConfig> CharacterInfoWidget = std::nullopt;
+    enum MissingMapsHintMode
+    {
+        AllIncompleteZonesOpenedInApiLink,
+        OneIncompleteZoneOpenedInWiki,
+        AllIncompleteZonesShownInMapCinematic,
+        OneIncompleteZoneCenteredOnWorldMap
+    } MissingMapsHint = OneIncompleteZoneCenteredOnWorldMap;
 
   private:
-    std::filesystem::path _filepath;
+    static void Render();
+    static void RenderWorldCompletionConfig(WorldCompletionConfig &);
 };
 } // namespace TWC
+namespace G
+{
+extern TWC::Options *Options;
+}

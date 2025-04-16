@@ -28,4 +28,10 @@ GetMapIdReplacement or GetCustomCompletion
 */
 bool ShouldSkipContentValidation(uint32_t id);
 
+/*
+Hovering overForsaken thicket in wolrd map view
+displays incorrect name: Spirit Vale
+*/
+void ApplyForsakenThicketNameFix();
+
 } // namespace TWC::Workarounds

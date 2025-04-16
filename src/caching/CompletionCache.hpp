@@ -1,6 +1,8 @@
 #pragma once
-#include "model/MapCompletion.hpp"
+
+#include "model/Completion.hpp"
 #include <mutex>
+#include <optional>
 #include <unordered_map>
 
 namespace TWC
@@ -8,31 +10,21 @@ namespace TWC
 class CompletionCache
 {
   public:
-    inline void Clear()
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        completion_.clear();
-    }
-
-    void EnsureValidity();
-
-    bool TryGet(uint32_t id, MapCompletion *comp);
-
-    inline void Set(uint32_t id, MapCompletion *comp)
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        completion_.emplace(id, *comp);
-    }
-
-    inline std::unordered_map<uint32_t, MapCompletion> GetCompletionData()
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return completion_;
-    }
+    CompletionCache();
+    ~CompletionCache();
+    std::optional<Completion> GetCompletion(const std::string &characterId);
+    void Update();
 
   private:
-    std::unordered_map<uint32_t, MapCompletion> completion_;
+    void Load();
+    void Persist();
+    decltype(Completion::Available) available_;
+    std::unordered_map<std::string, decltype(Completion::Completed)> completion_;
     std::mutex mutex_;
-    std::string player_;
 };
 } // namespace TWC
+
+namespace G::Cache
+{
+extern TWC::CompletionCache *CharacterInfo;
+} // namespace G::Cache
