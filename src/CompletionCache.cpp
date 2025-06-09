@@ -1,7 +1,6 @@
 #include "caching/CompletionCache.hpp"
 #include "Constants.hpp"
 #include "Logging.hpp"
-#include "ThreadWorker.hpp"
 #include <fstream>
 #include <nlohmann/json.hpp>
 
