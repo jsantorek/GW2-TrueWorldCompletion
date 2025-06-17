@@ -1,8 +1,8 @@
 #pragma once
 #include "model/MapClassification.hpp"
 #include <functional>
+#include <future>
 #include <memory>
-#include <mutex>
 #include <unordered_set>
 #include <vector>
 
@@ -14,18 +14,18 @@ class ContentSubsetCache
 {
   public:
     ContentSubsetCache(const WorldCompletionConfig &config);
-    void Refresh(const WorldCompletionConfig &config);
+    void QueueRefresh(const WorldCompletionConfig &config);
     std::vector<std::shared_ptr<MapContent>> GetMaps();
 
   private:
-    // void Refresh(std::unordered_set<uint32_t> mapExclusions, std::unordered_set<uint32_t> regionExclusions,
-    //              bool skipRewardless);
+    void Refresh(std::unordered_set<uint32_t> mapExclusions, std::unordered_set<uint32_t> regionExclusions,
+                 bool skipRewardless);
     std::function<bool(const std::shared_ptr<MapContent> &)> GetPredicate();
 
     std::unordered_set<std::shared_ptr<MapContent>> subset_;
     MapClassification::ExpansionAssignmentMode expansionMode_;
     MapClassification::WorldDivisionMode mapMode_;
-    std::mutex mutex_;
+    std::future<void> refreshed_;
 };
 } // namespace TWC
 namespace G::Cache

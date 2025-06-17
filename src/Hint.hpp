@@ -9,13 +9,13 @@ class Hint
     virtual ~Hint() = default;
     virtual void Activate() = 0;
 
-    virtual void Update(std::vector<uint32_t> ids)
+    virtual void Update(std::vector<std::tuple<uint32_t, uint32_t>> ids)
     {
-        incompleteMapIds = std::move(ids);
+        incomplete = std::move(ids);
     }
 
   protected:
-    std::vector<uint32_t> incompleteMapIds;
+    std::vector<std::tuple<uint32_t, uint32_t>> incomplete;
 };
 
 class MapCinematicHint : public Hint
@@ -31,14 +31,15 @@ class MapRecenterHint : public Hint
   public:
     ~MapRecenterHint() = default;
     void Activate() override;
-    void Update(std::vector<uint32_t> ids) override
+    void Update(std::vector<std::tuple<uint32_t, uint32_t>> ids) override
     {
         Hint::Update(std::move(ids));
-        last = incompleteMapIds.begin();
+        last = incomplete.begin();
     }
 
   private:
-    std::vector<uint32_t>::iterator last;
+    void ActivateMapRecenter(uint32_t id, uint32_t name);
+    std::vector<std::tuple<uint32_t, uint32_t>>::iterator last;
 };
 
 class LinkAPIHint : public Hint
@@ -53,13 +54,13 @@ class LinkWikiHint : public Hint
   public:
     ~LinkWikiHint() = default;
     void Activate() override;
-    void Update(std::vector<uint32_t> ids) override
+    void Update(std::vector<std::tuple<uint32_t, uint32_t>> ids) override
     {
         Hint::Update(std::move(ids));
-        last = incompleteMapIds.begin();
+        last = incomplete.begin();
     }
 
   private:
-    std::vector<uint32_t>::iterator last;
+    std::vector<std::tuple<uint32_t, uint32_t>>::iterator last;
 };
 } // namespace TWC

@@ -1,4 +1,5 @@
 
+#include "ContentService.hpp"
 #include "HintManager.hpp"
 #include "HooksManager.hpp"
 #include "Logging.hpp"
@@ -20,8 +21,9 @@ AddonAPI *APIDefs = nullptr;
 TWC::Options *Options = nullptr;
 TWC::HooksManager *Hooks = nullptr;
 TWC::PatchManager *Patches = nullptr;
-TWC::ThreadWorker *Thread = nullptr;
 TWC::HintManager *Hints = nullptr;
+std::shared_ptr<TWC::ThreadWorker> Thread;
+std::shared_ptr<TWC::ContentService> Content;
 namespace Cache
 {
 TWC::ContentCache *Content = nullptr;
@@ -61,7 +63,8 @@ void AddonLoad(AddonAPI *aApi)
     G::Hooks = new TWC::HooksManager();
     try
     {
-        G::Thread = new TWC::ThreadWorker();
+        G::Thread = TWC::ThreadWorker::Build();
+        G::Content = TWC::ContentService::Build();
         G::Cache::Content = new TWC::ContentCache();
         G::Hooks->EnableCriticalHooks();
     }
@@ -98,5 +101,6 @@ void AddonUnload()
     G::Cache::WorldMapCompletion.reset();
     G::Cache::CharacterInfoCompletion.reset();
     delete G::Options;
-    delete G::Thread;
+    G::Thread.reset();
+    G::Content.reset();
 }

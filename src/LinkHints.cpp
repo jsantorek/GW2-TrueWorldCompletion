@@ -9,7 +9,7 @@ void TWC::LinkAPIHint::Activate()
     std::stringstream oss;
     auto count = TWC::HttpsMaxMapIdCount;
     oss << "https://api.guildwars2.com/v2/maps?ids=";
-    for (const auto &id : incompleteMapIds)
+    for (const auto &[id, _] : incomplete)
     {
         oss << id << ",";
         if (!--count)
@@ -23,13 +23,14 @@ void TWC::LinkAPIHint::Activate()
 
 void TWC::LinkWikiHint::Activate()
 {
-    if (incompleteMapIds.empty())
+    if (incomplete.empty())
         return;
-    if (last == incompleteMapIds.end())
-        last = incompleteMapIds.begin();
+    if (last == incomplete.end())
+        last = incomplete.begin();
     ShellExecute(
         nullptr, nullptr,
-        std::format("https://wiki.guildwars2.com/index.php?title=Special:SearchByProperty/Has_map_id/{}&limit=1", *last)
+        std::format("https://wiki.guildwars2.com/index.php?title=Special:SearchByProperty/Has_map_id/{}&limit=1",
+                    std::get<0>(*last))
             .c_str(),
         nullptr, nullptr, SW_SHOW);
 

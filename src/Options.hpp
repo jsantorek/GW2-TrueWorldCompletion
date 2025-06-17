@@ -1,4 +1,5 @@
 #pragma once
+#include "model/Colour.hpp"
 #include "model/IdInclusion.hpp"
 #include "model/MapClassification.hpp"
 #include <cstdint>
@@ -73,9 +74,9 @@ class Options
 
     void Persist() const;
 
-    uint32_t GetMapProgressBarColour(MapClassification classification) const;
+    Colour4 GetMapProgressBarColour(MapClassification classification) const;
 
-    uint32_t GetWorldProgressBarColour(MapClassification classification) const;
+    Colour4 GetWorldProgressBarColour(MapClassification classification) const;
 
     uint32_t GetWorldProgressBarTitle(MapClassification classification) const;
 

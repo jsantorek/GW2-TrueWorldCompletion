@@ -1,6 +1,5 @@
 #pragma once
-#include <algorithm>
-#include <mutex>
+#include <future>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -10,20 +9,19 @@ struct MapContent;
 class ContentCache
 {
   public:
-    ContentCache()
+    ContentCache() : initialized_(std::async(std::launch::async, &ContentCache::Initialize, this))
     {
-        Initialize();
     }
 
     ~ContentCache()
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        initialized_.wait();
         content_.clear();
     }
 
     inline std::shared_ptr<MapContent> GetMap(uint32_t mapId)
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        initialized_.wait();
         if (auto it = content_.find(mapId); it != content_.end())
             return it->second;
         return nullptr;
@@ -31,7 +29,7 @@ class ContentCache
 
     std::unordered_set<std::shared_ptr<MapContent>> GetAll()
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        initialized_.wait();
         std::unordered_set<std::shared_ptr<MapContent>> uniqueContent;
         for (const auto &[_, content] : content_)
             uniqueContent.emplace(content);
@@ -40,8 +38,7 @@ class ContentCache
 
     template <class Predicate> std::unordered_set<std::shared_ptr<MapContent>> GetIf(Predicate pred)
     {
-
-        std::lock_guard<std::mutex> lock(mutex_);
+        initialized_.wait();
         std::unordered_set<std::shared_ptr<MapContent>> uniqueContent;
         for (const auto &[_, content] : content_)
             if (pred(*content))
@@ -52,7 +49,7 @@ class ContentCache
   private:
     void Initialize();
     std::unordered_map<uint32_t, std::shared_ptr<MapContent>> content_;
-    std::mutex mutex_;
+    std::future<void> initialized_;
 };
 } // namespace TWC
 namespace G::Cache

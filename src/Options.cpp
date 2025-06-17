@@ -1,12 +1,13 @@
 #include "Options.hpp"
 #include "Constants.hpp"
 #include "HintManager.hpp"
-#include "ThreadWorker.hpp"
 #include "caching/CompletionCache.hpp"
 #include "caching/ContentSubsetCache.hpp"
+#include "model/Colour.hpp"
 #include "model/MapClassification.hpp"
 #include <Logging.hpp>
 #include <Strings.hpp>
+#include <ThreadWorker.hpp>
 #include <fstream>
 #include <imgui.h>
 #include <magic_enum/magic_enum.hpp>
@@ -148,7 +149,7 @@ void Options::Render()
     if (ImGui::Button("Apply and Save"))
     {
         G::Options->Persist();
-        G::Cache::WorldMapCompletion->Refresh(G::Options->WorldProgressWidget);
+        G::Cache::WorldMapCompletion->QueueRefresh(G::Options->WorldProgressWidget);
         G::Hints->SetHintType(G::Options->MissingMapsHint);
         if (G::Options->CharacterInfoWidget)
         {
@@ -163,7 +164,7 @@ void Options::Render()
     if (ImGui::Button("Get completion hint"))
     {
         G::Hints->MarkStale();
-        G::Thread->AsyncTask(&HintManager::RequestHint, G::Hints);
+        G::Hints->RequestHint();
     }
     ImGui::SameLine();
     if (ImGui::Button("Cache character completion"))
@@ -282,31 +283,31 @@ void Options::RenderWorldCompletionConfig(WorldCompletionConfig &cfg)
     }
 }
 
-constexpr auto UnknownColour = 0xFFFFFFFF;
-uint32_t Options::GetMapProgressBarColour(MapClassification classification) const
+Colour4 Options::GetMapProgressBarColour(MapClassification classification) const
 {
-    // 0xFF318BBC default
+    if (DefaultColorScheme)
+        return Colours::Default;
     if (classification.Continent == MapClassification::TheMists)
-        return 0xFF888B8D;
+        return Colours::TheMists;
     switch (WorldProgressWidget.ExpansionAssignment == MapClassification::MapAccessibility ? classification.Expansion
                                                                                            : classification.Chronology)
     {
     case MapClassification::Core:
-        return 0xFFDE2909;
+        return Colours::Core;
     case MapClassification::HeartOfThorns:
-        return 0xFF119529;
+        return Colours::HeartOfThorns;
     case MapClassification::PathOfFire:
-        return 0xFF661351;
+        return Colours::PathOfFire;
     case MapClassification::EndOfDragons:
-        return 0xFF32D5A0;
+        return Colours::EndOfDragons;
     case MapClassification::SecretsOfTheObscure:
-        return 0xFFE6B80D;
+        return Colours::SecretsOfTheObscure;
     case MapClassification::JanthirWilds:
-        return 0xFF28509F;
+        return Colours::JanthirWilds;
     default:
         break;
     }
-    return UnknownColour;
+    return Colours::Unknown;
 }
 
 std::unordered_set<uint32_t> WorldCompletionConfig::GetExcludedMapIds() const
@@ -336,30 +337,32 @@ std::unordered_set<uint32_t> WorldCompletionConfig::GetExcludedRegionIds() const
     return exclusions;
 }
 
-uint32_t Options::GetWorldProgressBarColour(MapClassification classification) const
+Colour4 Options::GetWorldProgressBarColour(MapClassification classification) const
 {
+    if (DefaultColorScheme)
+        return Colours::Default;
     if (WorldProgressWidget.MapSeparation == MapClassification::AllMapsCollectively ||
         WorldProgressWidget.MapSeparation == MapClassification::CurrentOrEarlierExpansionMaps)
     {
-        return 0xFFD3B54B; // TrueWorldCompletion
+        return Colours::Legendary;
     }
     else if (WorldProgressWidget.MapSeparation == MapClassification::CurrentContinentMapsOnly)
     {
         switch (classification.Continent)
         {
         case MapClassification::TheMists:
-            return 0xFF888B8D;
+            return Colours::TheMists;
         case MapClassification::Tyria:
-            return 0xFFD3B54B;
+            return Colours::Default;
         default:
             break;
         }
     }
-    else if (WorldProgressWidget.MapSeparation == MapClassification::CurrentContinentMapsOnly)
+    else if (WorldProgressWidget.MapSeparation == MapClassification::CurrentExpansionMapsOnly)
     {
         return GetMapProgressBarColour(classification);
     }
-    return UnknownColour;
+    return Colours::Unknown;
 }
 
 uint32_t Options::GetWorldProgressBarTitle(MapClassification classification) const
@@ -381,7 +384,7 @@ uint32_t Options::GetWorldProgressBarTitle(MapClassification classification) con
             break;
         }
     }
-    else if (WorldProgressWidget.MapSeparation == MapClassification::CurrentContinentMapsOnly)
+    else if (WorldProgressWidget.MapSeparation == MapClassification::CurrentExpansionMapsOnly)
     {
         if (classification.Continent == MapClassification::TheMists)
             return Strings::TheMists;

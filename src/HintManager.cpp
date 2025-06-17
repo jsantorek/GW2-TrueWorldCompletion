@@ -3,6 +3,7 @@
 #include "ContentAnalysis.hpp"
 #include "Hint.hpp"
 #include "Logging.hpp"
+#include "ThreadWorker.hpp"
 #include "caching/ContentSubsetCache.hpp"
 #include <memory>
 #include <mutex>
@@ -48,7 +49,7 @@ void TWC::HintManager::RequestHint()
     auto lock = std::lock_guard(mutex_);
     if (stale_)
     {
-        RefreshHint();
+        G::Thread->SyncTask(&HintManager::RefreshHint, this).get();
         stale_ = false;
     }
     hint_->Activate();
@@ -58,17 +59,20 @@ void TWC::HintManager::RefreshHint()
 {
     auto player = GW2RE::Core::GetPropContext().GetCharCliCtx().GetControlledPlayer();
     if (player.null())
+    {
         hint_->Update({});
+        return;
+    }
     auto poiCtx = GW2RE::Core::GetPropContext().GetPoiCtx().ptr();
     auto smgr = reinterpret_cast<GW2RE::HeroChallengeMgr_t *>(player.GetHeroChallengeMgr());
     auto tmgr = reinterpret_cast<GW2RE::TaskMgr_t *>(player.GetTaskMgr());
     auto pmgr = reinterpret_cast<GW2RE::ProgressMgr_t *>(player.GetProgressDataMgr());
-    std::vector<uint32_t> ids;
+    std::vector<std::tuple<uint32_t, uint32_t>> ids;
     for (auto map : G::Cache::WorldMapCompletion->GetMaps())
     {
         if (ContentAnalysis::IsComplete(map.get(), smgr, tmgr, pmgr, poiCtx))
             continue;
-        ids.push_back(map->ID);
+        ids.emplace_back(map->ID, map->Name);
     }
     LOG(TRACE, "Found {} incomplete maps", ids.size());
     hint_->Update(std::move(ids));

@@ -45,7 +45,7 @@ void CompletionCache::Load()
         {
             completion_ = json["Completion"].get<decltype(CompletionCache::completion_)>();
             available_ = json["Available"].get<decltype(CompletionCache::available_)>();
-            LOG(INFO, "Loaded completion data of {} characters", completion_.size());
+            LOG(INFO, "Completion data of {} characters obtained", completion_.size());
         }
     }
     catch (const std::exception &e)
