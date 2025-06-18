@@ -31,7 +31,7 @@ struct MapClassification
 
     friend std::ostream &operator<<(std::ostream &os, const MapClassification &c)
     {
-        os << "[on " << c.Continent << ", accessible to " << c.MapAccessibility << ", during " << c.Chronology << "]";
+        os << "[on " << c.Continent << ", accessible to " << c.Expansion << ", during " << c.Chronology << "]";
         return os;
     }
 
