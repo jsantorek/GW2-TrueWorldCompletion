@@ -19,8 +19,20 @@ struct WorldCompletionConfig
              IdInclusion{1315, "Armistice Bastion"},
              IdInclusion{1465, "Thousand Seas Pavilion"},
          }},
-        {"Story exclusive", {IdInclusion{335, "Claw Island"}, IdInclusion{111, "Victory or Death"}}},
-        {"Historical", {IdInclusion{901, "Molten Furnace"}, IdInclusion{915, "Aetherblade Retreat"}}},
+        {"Story exclusive",
+         {
+             IdInclusion{335, "Claw Island"},
+             IdInclusion{805, "Cathedral of Hidden Depths"},
+             IdInclusion{111, "Victory or Death"},
+         }},
+        {"Historical",
+         {
+             IdInclusion{901, "Molten Furnace"},
+             IdInclusion{915, "Aetherblade Retreat"},
+             IdInclusion{939, "Resealing the Bloody Prince"},
+             IdInclusion{938, "The Reliquary"},
+             IdInclusion{880, "Toypocalypse"},
+         }},
         {"Wintersday Celebration",
          {
              IdInclusion{877, "Snowball Mayhem"},
