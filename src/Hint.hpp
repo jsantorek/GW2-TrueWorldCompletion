@@ -32,7 +32,7 @@ class MapRecenterHint : public Hint
   public:
     ~MapRecenterHint() = default;
     void Activate() override;
-    void Update(std::vector<const GW2RE::MapDef_t *> ids) override;
+    void Update(std::vector<const GW2RE::MapDef_t *> maps) override;
 
   private:
     void ActivateMapRecenter(const GW2RE::MapDef_t *map);
@@ -51,9 +51,9 @@ class LinkWikiHint : public Hint
   public:
     ~LinkWikiHint() = default;
     void Activate() override;
-    void Update(std::vector<const GW2RE::MapDef_t *> ids) override
+    void Update(std::vector<const GW2RE::MapDef_t *> maps) override
     {
-        Hint::Update(std::move(ids));
+        Hint::Update(std::move(maps));
         last = incomplete.begin();
     }
 

@@ -245,11 +245,11 @@ void Options::RenderWorldCompletionConfig(WorldCompletionConfig &cfg)
             }
         }
         ImGui::TextUnformatted("Custom");
-        static auto CustomInclusions = std::vector<std::pair<uint32_t, GW2RE::TextHash>>();
-        for (const auto &[id, name] : CustomInclusions)
+        static auto CustomInclusions = std::vector<uint32_t>();
+        for (const auto &id : CustomInclusions)
         {
             bool isActive = !cfg.MapExclusions.contains(id);
-            if (ImGui::Checkbox(std::format("{} id={}", name, id).c_str(), &isActive))
+            if (ImGui::Checkbox(std::format("#{}", id).c_str(), &isActive))
             {
                 if (isActive)
                     cfg.MapExclusions.erase(id);
@@ -271,7 +271,7 @@ void Options::RenderWorldCompletionConfig(WorldCompletionConfig &cfg)
                 error = "Map#%u already available for explicit exclusion.";
             }
             else if (std::any_of(CustomInclusions.begin(), CustomInclusions.end(),
-                                 [id = newId](auto id_name) { return id_name.first == id; }))
+                                 [&](auto id) { return id == newId; }))
             {
                 error = "Map#%u already added.";
             }
@@ -281,7 +281,7 @@ void Options::RenderWorldCompletionConfig(WorldCompletionConfig &cfg)
                     error = std::format("Map#{} uses content of Map#{}", newId, map->Def->ID);
                 else
                     error = "";
-                CustomInclusions.emplace_back(newId, map->Def->Name);
+                CustomInclusions.emplace_back(newId);
                 newId = 0;
             }
         }
