@@ -4,6 +4,7 @@
 #include <mutex>
 #include <optional>
 #include <unordered_map>
+#include <utility>
 
 namespace TWC
 {
@@ -14,6 +15,12 @@ class CompletionCache
     ~CompletionCache();
     std::optional<Completion> GetCompletion(const std::string &characterId);
     void Update();
+
+    auto GetAll()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return std::make_pair(available_, completion_);
+    }
 
   private:
     void Load();

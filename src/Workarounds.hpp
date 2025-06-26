@@ -1,7 +1,9 @@
 #pragma once
 
-#include "model/CustomCompletion.hpp"
+#include <map>
 #include <optional>
+#include <unordered_set>
+#include <vector>
 
 namespace TWC::Workarounds
 {
@@ -18,20 +20,14 @@ There are some maps with incosistencies severe enough
 that substitution for another id will not fix them.
 This function provides mechanism for custom completion computation.
 */
-std::optional<CustomCompletion> GetCustomCompletion(uint32_t id);
+std::unordered_set<uint32_t> GetPoiExclusions(uint32_t id);
 
 /*
-To verify if map contains only content of its own
-and thus should be accounted for in world completion, its explicitly checked.
-Some maps though should not have its content validted, eg. they were handled in
-GetMapIdReplacement or GetCustomCompletion
+There is a selection of maps that addon explicitly allows to skip, those include:
+maps exclusive to gemstore, seasonal maps, retired maps that are no longer accessible
+and maps exclusive to story instances.
 */
-bool ShouldSkipContentValidation(uint32_t id);
-
-/*
-Hovering overForsaken thicket in wolrd map view
-displays incorrect name: Spirit Vale
-*/
-void ApplyForsakenThicketNameFix();
+bool IsMapExplicitlyExcludable(uint32_t id);
+std::map<const char *, std::vector<std::pair<uint32_t, const char *>>> GetCategorizedExplicitlyExcludableMaps();
 
 } // namespace TWC::Workarounds

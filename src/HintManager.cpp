@@ -3,6 +3,7 @@
 #include "ContentAnalysis.hpp"
 #include "Hint.hpp"
 #include "Logging.hpp"
+#include "Map.h"
 #include "ThreadWorker.hpp"
 #include "caching/ContentSubsetCache.hpp"
 #include <memory>
@@ -67,13 +68,13 @@ void TWC::HintManager::RefreshHint()
     auto smgr = reinterpret_cast<GW2RE::HeroChallengeMgr_t *>(player.GetHeroChallengeMgr());
     auto tmgr = reinterpret_cast<GW2RE::TaskMgr_t *>(player.GetTaskMgr());
     auto pmgr = reinterpret_cast<GW2RE::ProgressMgr_t *>(player.GetProgressDataMgr());
-    std::vector<std::tuple<uint32_t, uint32_t>> ids;
+    std::vector<const GW2RE::MapDef_t *> incomplete;
     for (auto map : G::Cache::WorldMapCompletion->GetMaps())
     {
         if (ContentAnalysis::IsComplete(map.get(), smgr, tmgr, pmgr, poiCtx))
             continue;
-        ids.emplace_back(map->ID, map->Name);
+        incomplete.emplace_back(map->Def);
     }
-    LOG(TRACE, "Found {} incomplete maps", ids.size());
-    hint_->Update(std::move(ids));
+    LOG(TRACE, "Found {} incomplete maps", incomplete.size());
+    hint_->Update(std::move(incomplete));
 }

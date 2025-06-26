@@ -46,7 +46,7 @@ AddonDefinition *GetAddonDef()
         .Description = "Seamless display within game map, includes all zones of all expansions and living worlds.",
         .Load = AddonLoad,
         .Unload = AddonUnload,
-        .Flags = EAddonFlags_None,
+        .Flags = static_cast<EAddonFlags>(EAddonFlags_IsVolatile | EAddonFlags_OnlyLoadDuringGameLaunchSequence),
         .Provider = EUpdateProvider_GitHub,
         .UpdateLink = "https://github.com/jsantorek/GW2-" ADDON_NAME};
     return &def;

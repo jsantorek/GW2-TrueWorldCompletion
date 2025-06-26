@@ -1,40 +1,30 @@
 #include "Options.hpp"
+#include "Common.h"
 #include "Constants.hpp"
 #include "HintManager.hpp"
+#include "Types.h"
 #include "caching/CompletionCache.hpp"
+#include "caching/ContentCache.hpp"
 #include "caching/ContentSubsetCache.hpp"
 #include "model/Colour.hpp"
 #include "model/MapClassification.hpp"
+#include <ContentAnalysis.hpp>
 #include <Logging.hpp>
 #include <Strings.hpp>
 #include <ThreadWorker.hpp>
+#include <Workarounds.hpp>
+#include <algorithm>
 #include <fstream>
 #include <imgui.h>
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
-#include <set>
 
 namespace TWC
 {
 void to_json(nlohmann::json &j, const WorldCompletionConfig &c)
 {
-    std::set<int32_t> ExcludedMaps(c.MapExclusions.begin(), c.MapExclusions.end());
-    for (const auto &[key, inclusions] : c.MapInclusions)
-    {
-        for (const auto &inclusion : inclusions)
-        {
-            if (!inclusion.Active)
-                ExcludedMaps.insert(static_cast<int32_t>(inclusion.ID));
-        }
-    }
-    std::set<int32_t> ExcludedRegions(c.RegionExclusions.begin(), c.RegionExclusions.end());
-    for (const auto &inclusion : c.RegionInclusions)
-    {
-        if (!inclusion.Active)
-            ExcludedMaps.insert(static_cast<int32_t>(inclusion.ID));
-    }
-    j = nlohmann::json{{"ExcludedMaps", ExcludedMaps},
-                       {"ExcludedRegions", ExcludedRegions},
+    j = nlohmann::json{{"ExcludedMaps", c.MapExclusions},
+                       {"ExcludedRegions", c.RegionExclusions},
                        {"IncludeMapsWithoutCompletionReward", c.IncludeMapsWithoutCompletionReward},
                        {"MapSeparation", magic_enum::enum_name(c.MapSeparation)},
                        {"ExpansionAssignment", magic_enum::enum_name(c.ExpansionAssignment)}};
@@ -42,30 +32,8 @@ void to_json(nlohmann::json &j, const WorldCompletionConfig &c)
 
 void from_json(const nlohmann::json &j, WorldCompletionConfig &c)
 {
-    auto ExcludedMaps = j["ExcludedMaps"].get<std::set<int>>();
-    for (auto &[key, inclusions] : c.MapInclusions)
-    {
-        for (auto &inclusion : inclusions)
-        {
-            if (auto it = ExcludedMaps.find(static_cast<int32_t>(inclusion.ID)); it != ExcludedMaps.end())
-            {
-                inclusion.Active = false;
-                ExcludedMaps.erase(it);
-            }
-        }
-    }
-    c.MapExclusions = std::vector<uint32_t>(ExcludedMaps.begin(), ExcludedMaps.end());
-
-    auto ExcludedRegions = j["ExcludedRegions"].get<std::set<int>>();
-    for (auto &inclusion : c.RegionInclusions)
-    {
-        if (auto it = ExcludedRegions.find(static_cast<int32_t>(inclusion.ID)); it != ExcludedRegions.end())
-        {
-            inclusion.Active = false;
-            ExcludedRegions.erase(it);
-        }
-    }
-    c.RegionExclusions = std::vector<uint32_t>(ExcludedRegions.begin(), ExcludedRegions.end());
+    c.MapExclusions = j["ExcludedMaps"].get<std::unordered_set<uint32_t>>();
+    c.RegionExclusions = j["ExcludedRegions"].get<std::unordered_set<uint32_t>>();
     j.at("IncludeMapsWithoutCompletionReward").get_to(c.IncludeMapsWithoutCompletionReward);
 
     c.MapSeparation =
@@ -190,18 +158,14 @@ void Options::Render()
         }
         ImGui::EndCombo();
     }
-    if (ImGui::TreeNode("WorldMap style"))
-    {
-        ImGui::Checkbox("Use game's default colors for map progress bars", &G::Options->DefaultColorScheme);
-        ImGui::TreePop();
-    }
+    ImGui::Checkbox("Use game's default colors for map progress bars", &G::Options->DefaultColorScheme);
 
     if (ImGui::TreeNode("WorldMap completion"))
     {
         RenderWorldCompletionConfig(G::Options->WorldProgressWidget);
         ImGui::TreePop();
     }
-    static int e = G::Options->CharacterInfoWidget ? 0 : 1;
+    int e = G::Options->CharacterInfoWidget ? 1 : 0;
     ImGui::TextUnformatted("CharSelection screen completion uses");
     ImGui::SameLine();
     if (ImGui::RadioButton("WorldMap settings", &e, 0))
@@ -243,42 +207,88 @@ void Options::RenderWorldCompletionConfig(WorldCompletionConfig &cfg)
         }
         ImGui::EndCombo();
     }
-    if (ImGui::TreeNode("Optional region inclusions"))
+    ImGui::Checkbox(std::format("Maps without completion reward####{}", cfgId).c_str(),
+                    &cfg.IncludeMapsWithoutCompletionReward);
+    if (cfg.IncludeMapsWithoutCompletionReward && ImGui::TreeNode("Included regions"))
     {
-        for (auto &excl : cfg.RegionInclusions)
-            ImGui::Checkbox(excl.Name, &excl.Active);
-        ImGui::TextUnformatted("Custom");
-        ImGui::SameLine();
-        if (ImGui::Button(" + "))
-            cfg.RegionExclusions.push_back(0);
-        ImGui::SameLine();
-        if (ImGui::Button(" - "))
-            cfg.RegionExclusions.pop_back();
-        for (std::size_t i = 0; i < cfg.RegionExclusions.size(); i++)
-            ImGui::InputScalar(std::format("####{}RegionExclusions{}", cfgId, i).c_str(), ImGuiDataType_U32,
-                               &cfg.RegionExclusions[i]);
+        constexpr auto Regions = std::array<std::pair<uint32_t, const char *>, 2>{
+            std::pair<uint32_t, const char *>{6, "Player vs. Player"}, {7, "World vs. World"}};
+        for (const auto &[id, name] : Regions)
+        {
+            bool isActive = !cfg.RegionExclusions.contains(id);
+            if (ImGui::Checkbox(name, &isActive))
+            {
+                if (isActive)
+                    cfg.RegionExclusions.erase(id);
+                else
+                    cfg.RegionExclusions.emplace(id);
+            }
+        }
         ImGui::TreePop();
     }
-    if (ImGui::TreeNode("Optional map inclusions"))
+    if (cfg.IncludeMapsWithoutCompletionReward && ImGui::TreeNode("Optional map inclusions"))
     {
-        ImGui::Checkbox(std::format("Maps without completion reward####{}", cfgId).c_str(),
-                        &cfg.IncludeMapsWithoutCompletionReward);
-        for (auto &[section, inclusions] : cfg.MapInclusions)
+        static auto ExplicitInclusions = Workarounds::GetCategorizedExplicitlyExcludableMaps();
+        for (auto &[cat, maps] : ExplicitInclusions)
         {
-            ImGui::TextUnformatted(section);
-            for (auto &excl : inclusions)
-                ImGui::Checkbox(excl.Name, &excl.Active);
+            ImGui::TextUnformatted(cat);
+            for (const auto &[id, name] : maps)
+            {
+                bool isActive = !cfg.MapExclusions.contains(id);
+                if (ImGui::Checkbox(name, &isActive))
+                {
+                    if (isActive)
+                        cfg.MapExclusions.erase(id);
+                    else
+                        cfg.MapExclusions.emplace(id);
+                }
+            }
         }
         ImGui::TextUnformatted("Custom");
-        ImGui::SameLine();
-        if (ImGui::Button(" + "))
-            cfg.MapExclusions.push_back(0);
-        ImGui::SameLine();
-        if (ImGui::Button(" - "))
-            cfg.MapExclusions.pop_back();
-        for (std::size_t i = 0; i < cfg.MapExclusions.size(); i++)
-            ImGui::InputScalar(std::format("####{}MapExclusions{}", cfgId, i).c_str(), ImGuiDataType_U32,
-                               &cfg.MapExclusions[i]);
+        static auto CustomInclusions = std::vector<std::pair<uint32_t, GW2RE::TextHash>>();
+        for (const auto &[id, name] : CustomInclusions)
+        {
+            bool isActive = !cfg.MapExclusions.contains(id);
+            if (ImGui::Checkbox(std::format("{} id={}", name, id).c_str(), &isActive))
+            {
+                if (isActive)
+                    cfg.MapExclusions.erase(id);
+                else
+                    cfg.MapExclusions.emplace(id);
+            }
+        }
+        static uint32_t newId = 0;
+        static std::string error = "";
+        if (ImGui::InputScalar("Add Map", ImGuiDataType_U32, &newId, nullptr, nullptr, nullptr,
+                               ImGuiInputTextFlags_EnterReturnsTrue))
+        {
+            if (auto map = G::Cache::Content->GetMap(newId); !map || !map->Def->Name)
+            {
+                error = "Map#%u couldn't be found or has no discoverable content.";
+            }
+            else if (Workarounds::IsMapExplicitlyExcludable(newId))
+            {
+                error = "Map#%u already available for explicit exclusion.";
+            }
+            else if (std::any_of(CustomInclusions.begin(), CustomInclusions.end(),
+                                 [id = newId](auto id_name) { return id_name.first == id; }))
+            {
+                error = "Map#%u already added.";
+            }
+            else
+            {
+                if (map->Def->ID != newId)
+                    error = std::format("Map#{} uses content of Map#{}", newId, map->Def->ID);
+                else
+                    error = "";
+                CustomInclusions.emplace_back(newId, map->Def->Name);
+                newId = 0;
+            }
+        }
+        if (!error.empty())
+        {
+            ImGui::TextColored({1, 0, 0, 1}, error.c_str(), newId);
+        }
         ImGui::TreePop();
     }
 }
@@ -308,33 +318,6 @@ Colour4 Options::GetMapProgressBarColour(MapClassification classification) const
         break;
     }
     return Colours::Unknown;
-}
-
-std::unordered_set<uint32_t> WorldCompletionConfig::GetExcludedMapIds() const
-{
-    std::unordered_set<uint32_t> exclusions(MapExclusions.begin(), MapExclusions.end());
-    for (const auto &[_, inclusions] : MapInclusions)
-    {
-        for (const auto &incl : inclusions)
-        {
-            if (incl.Active)
-                continue;
-            exclusions.insert(incl.ID);
-        }
-    }
-    return exclusions;
-}
-
-std::unordered_set<uint32_t> WorldCompletionConfig::GetExcludedRegionIds() const
-{
-    std::unordered_set<uint32_t> exclusions(RegionExclusions.begin(), RegionExclusions.end());
-    for (const auto &incl : RegionInclusions)
-    {
-        if (incl.Active)
-            continue;
-        exclusions.insert(incl.ID);
-    }
-    return exclusions;
 }
 
 Colour4 Options::GetWorldProgressBarColour(MapClassification classification) const

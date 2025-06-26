@@ -9,9 +9,9 @@ void TWC::LinkAPIHint::Activate()
     std::stringstream oss;
     auto count = TWC::HttpsMaxMapIdCount;
     oss << "https://api.guildwars2.com/v2/maps?ids=";
-    for (const auto &[id, _] : incomplete)
+    for (const auto map : incomplete)
     {
-        oss << id << ",";
+        oss << map->ID << ",";
         if (!--count)
         {
             LOG(WARNING, "Exceeded maximum allowed number of map ids - linking partial results");
@@ -30,7 +30,7 @@ void TWC::LinkWikiHint::Activate()
     ShellExecute(
         nullptr, nullptr,
         std::format("https://wiki.guildwars2.com/index.php?title=Special:SearchByProperty/Has_map_id/{}&limit=1",
-                    std::get<0>(*last))
+                    (*last)->ID)
             .c_str(),
         nullptr, nullptr, SW_SHOW);
 

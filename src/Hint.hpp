@@ -1,4 +1,5 @@
 #pragma once
+#include "Map.h"
 #include <vector>
 namespace TWC
 {
@@ -9,13 +10,13 @@ class Hint
     virtual ~Hint() = default;
     virtual void Activate() = 0;
 
-    virtual void Update(std::vector<std::tuple<uint32_t, uint32_t>> ids)
+    virtual void Update(std::vector<const GW2RE::MapDef_t *> maps)
     {
-        incomplete = std::move(ids);
+        incomplete = std::move(maps);
     }
 
   protected:
-    std::vector<std::tuple<uint32_t, uint32_t>> incomplete;
+    std::vector<const GW2RE::MapDef_t *> incomplete;
 };
 
 class MapCinematicHint : public Hint
@@ -31,15 +32,11 @@ class MapRecenterHint : public Hint
   public:
     ~MapRecenterHint() = default;
     void Activate() override;
-    void Update(std::vector<std::tuple<uint32_t, uint32_t>> ids) override
-    {
-        Hint::Update(std::move(ids));
-        last = incomplete.begin();
-    }
+    void Update(std::vector<const GW2RE::MapDef_t *> ids) override;
 
   private:
-    void ActivateMapRecenter(uint32_t id, uint32_t name);
-    std::vector<std::tuple<uint32_t, uint32_t>>::iterator last;
+    void ActivateMapRecenter(const GW2RE::MapDef_t *map);
+    std::vector<const GW2RE::MapDef_t *>::iterator last;
 };
 
 class LinkAPIHint : public Hint
@@ -54,13 +51,13 @@ class LinkWikiHint : public Hint
   public:
     ~LinkWikiHint() = default;
     void Activate() override;
-    void Update(std::vector<std::tuple<uint32_t, uint32_t>> ids) override
+    void Update(std::vector<const GW2RE::MapDef_t *> ids) override
     {
         Hint::Update(std::move(ids));
         last = incomplete.begin();
     }
 
   private:
-    std::vector<std::tuple<uint32_t, uint32_t>>::iterator last;
+    std::vector<const GW2RE::MapDef_t *>::iterator last;
 };
 } // namespace TWC
