@@ -22,7 +22,6 @@ class ContentCache
 
     inline std::shared_ptr<MapContent> GetMap(uint32_t mapId)
     {
-        LOG_DEBUG();
         initialized_.wait();
         if (auto it = content_.find(mapId); it != content_.end())
             return it->second;
@@ -31,7 +30,6 @@ class ContentCache
 
     std::unordered_set<std::shared_ptr<MapContent>> GetAll()
     {
-        LOG_DEBUG();
         initialized_.wait();
         std::unordered_set<std::shared_ptr<MapContent>> uniqueContent;
         for (const auto &[_, content] : content_)
@@ -41,7 +39,6 @@ class ContentCache
 
     template <class Predicate> std::unordered_set<std::shared_ptr<MapContent>> GetIf(Predicate pred)
     {
-        LOG_DEBUG();
         initialized_.wait();
         std::unordered_set<std::shared_ptr<MapContent>> uniqueContent;
         for (const auto &[_, content] : content_)
