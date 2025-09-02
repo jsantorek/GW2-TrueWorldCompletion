@@ -36,6 +36,15 @@ struct Completion
             return 255;
         return static_cast<uint8_t>(254.0f * static_cast<float>(*this));
     }
+
+    auto Percentage()
+    {
+        if (!Available || !Completed)
+            return 0.;
+        if (Available == Completed)
+            return 100.;
+        return std::floor(1000. * (static_cast<float>(Completed) / static_cast<float>(Available))) / 10.0;
+    }
 };
 
 inline Completion operator+(const Completion &a, const Completion &b)

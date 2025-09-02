@@ -1,5 +1,6 @@
 build
 .conan
+.addons
 .venv
 .vscode
 style.css

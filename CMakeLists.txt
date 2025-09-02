@@ -18,9 +18,10 @@ find_package(rcgg-nexus-api)
 find_package(imgui)
 find_package(nlohmann_json)
 find_package(magic_enum)
+find_package(enumflags)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/src-re/GW2RE.cmake)
-file(GLOB SRCs ${CMAKE_CURRENT_SOURCE_DIR}/src/*.[hc]pp)
+file(GLOB_RECURSE SRCs ${CMAKE_CURRENT_SOURCE_DIR}/src/*.[hc]pp)
 add_library(${PROJECT_NAME}
     SHARED
         ${SRCs}
@@ -32,6 +33,7 @@ target_link_libraries(${PROJECT_NAME}
     imgui::imgui
     nlohmann_json::nlohmann_json
     magic_enum::magic_enum
+    EnumFlags::EnumFlags
     ${RE_LIBs}
 )
 string(REGEX REPLACE "[^A-Z]" "" PROJECT_ACRONYM "${PROJECT_NAME}")

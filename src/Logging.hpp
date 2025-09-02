@@ -10,6 +10,7 @@ extern AddonAPI *APIDefs;
 
 namespace log
 {
+constexpr auto DebugLogThreshold = ELogLevel_DEBUG;
 template <ELogLevel level> struct StreamLogger
 {
     StreamLogger(const std::string_view &funcsig)
@@ -80,10 +81,21 @@ consteval auto cropped_funcsig(const std::string_view &funcsig)
 #define LOG_STREAM(level) log::StreamLogger<ELogLevel_##level>(log::cropped_funcsig(__PRETTY_FUNCTION__))
 #define LOG_SCOPE(level, ...)                                                                                          \
     log::ScopeLogger<ELogLevel_##level>::make(log::cropped_funcsig(__PRETTY_FUNCTION__), __VA_ARGS__)
+#ifdef NDEBUG
+#define LOG_DEBUG()
+#define LOG(level, ...)                                                                                                \
+    if constexpr (ELogLevel_##level < log::DebugLogThreshold)                                                          \
+    G::APIDefs->Log(ELogLevel_##level, ADDON_NAME,                                                                     \
+                    std::format("{} {}", log::cropped_funcsig(__PRETTY_FUNCTION__), std::format(__VA_ARGS__)).c_str())
+#define LOG_FAST(level, msg)                                                                                           \
+    if constexpr (ELogLevel_##level < log::DebugLogThreshold)                                                          \
+    G::APIDefs->Log(ELogLevel_##level, ADDON_NAME, msg)
+#else
+#define LOG_DEBUG()                                                                                                    \
+    G::APIDefs->Log(ELogLevel_DEBUG, ADDON_NAME,                                                                       \
+                    std::format("[{}:{}][{}]", __FILE__, __LINE__, log::cropped_funcsig(__PRETTY_FUNCTION__)).c_str())
 #define LOG(level, ...)                                                                                                \
     G::APIDefs->Log(ELogLevel_##level, ADDON_NAME,                                                                     \
                     std::format("{} {}", log::cropped_funcsig(__PRETTY_FUNCTION__), std::format(__VA_ARGS__)).c_str())
 #define LOG_FAST(level, msg) G::APIDefs->Log(ELogLevel_##level, ADDON_NAME, msg)
-#define LOG_DEBUG()                                                                                                    \
-    G::APIDefs->Log(ELogLevel_DEBUG, ADDON_NAME,                                                                       \
-                    std::format("[{}:{}][{}]", __FILE__, __LINE__, log::cropped_funcsig(__PRETTY_FUNCTION__)).c_str())
+#endif

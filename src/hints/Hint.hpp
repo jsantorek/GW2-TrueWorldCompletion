@@ -1,5 +1,5 @@
 #pragma once
-#include "Map.h"
+#include "Game/Map.h"
 #include <vector>
 namespace TWC
 {
@@ -17,14 +17,6 @@ class Hint
 
   protected:
     std::vector<const GW2RE::MapDef_t *> incomplete;
-};
-
-class MapCinematicHint : public Hint
-{
-  public:
-    ~MapCinematicHint() = default;
-
-    void Activate() override;
 };
 
 class MapRecenterHint : public Hint
@@ -46,6 +38,7 @@ class LinkAPIHint : public Hint
 
     void Activate() override;
 };
+
 class LinkWikiHint : public Hint
 {
   public:

@@ -1,34 +1,33 @@
-
-#include "ContentService.hpp"
-#include "HintManager.hpp"
-#include "HooksManager.hpp"
+#include "CompletionManager.hpp"
 #include "Logging.hpp"
 #include "Options.hpp"
-#include "PatchManager.hpp"
-#include "ThreadWorker.hpp"
+#include "StyleManager.hpp"
+#include "ThreadService.h"
 #include "caching/CompletionCache.hpp"
 #include "caching/ContentCache.hpp"
-#include "caching/ContentSubsetCache.hpp"
+#include "hints/HintManager.hpp"
+#include "hooks/HooksManager.hpp"
+#include "patches/PatchManager.hpp"
 #include <Nexus.h>
 #include <imgui.h>
+#ifndef NDEBUG
+#include "debug/Debug.hpp"
+#endif
 
 void AddonLoad(AddonAPI *aApi);
 void AddonUnload();
-
 namespace G
 {
 AddonAPI *APIDefs = nullptr;
-TWC::Options *Options = nullptr;
 TWC::HooksManager *Hooks = nullptr;
 TWC::PatchManager *Patches = nullptr;
 TWC::HintManager *Hints = nullptr;
-std::shared_ptr<TWC::ThreadWorker> Thread;
-std::shared_ptr<TWC::ContentService> Content;
+TWC::StyleManager *Style = nullptr;
+TWC::CompletionManager *Completion = nullptr;
+std::shared_ptr<TWC::ThreadService> Thread = nullptr;
 namespace Cache
 {
 TWC::ContentCache *Content = nullptr;
-std::shared_ptr<TWC::ContentSubsetCache> WorldMapCompletion = nullptr;
-std::shared_ptr<TWC::ContentSubsetCache> CharacterInfoCompletion = nullptr;
 TWC::CompletionCache *CharacterInfo = nullptr;
 } // namespace Cache
 } // namespace G
@@ -46,7 +45,7 @@ AddonDefinition *GetAddonDef()
         .Description = "Seamless display within game map, includes all zones of all expansions and living worlds.",
         .Load = AddonLoad,
         .Unload = AddonUnload,
-        .Flags = static_cast<EAddonFlags>(EAddonFlags_IsVolatile | EAddonFlags_OnlyLoadDuringGameLaunchSequence),
+        .Flags = EAddonFlags_IsVolatile,
         .Provider = EUpdateProvider_GitHub,
         .UpdateLink = "https://github.com/jsantorek/GW2-" ADDON_NAME};
     return &def;
@@ -59,13 +58,15 @@ void AddonLoad(AddonAPI *aApi)
     ImGui::SetAllocatorFunctions(reinterpret_cast<void *(*)(size_t, void *)>(G::APIDefs->ImguiMalloc),
                                  reinterpret_cast<void (*)(void *, void *)>(G::APIDefs->ImguiFree));
 
-    G::Options = new TWC::Options();
     G::Hooks = new TWC::HooksManager();
+    G::Style = new TWC::StyleManager();
+    G::Hints = new TWC::HintManager();
+    G::Completion = new TWC::CompletionManager();
+    G::Cache::Content = new TWC::ContentCache();
+    G::Cache::CharacterInfo = new TWC::CompletionCache();
     try
     {
-        G::Thread = TWC::ThreadWorker::Build();
-        G::Content = TWC::ContentService::Build();
-        G::Cache::Content = new TWC::ContentCache();
+        G::Thread = TWC::ThreadService::Build();
         G::Hooks->EnableCriticalHooks();
     }
     catch (const std::runtime_error &e)
@@ -73,34 +74,31 @@ void AddonLoad(AddonAPI *aApi)
         LOG_FAST(CRITICAL, std::format("Critical section failure(s):\n\t{}\nAddon disabled!", e.what()).c_str());
         return;
     }
+    TWC::Options::Load()->Apply();
     G::Hooks->EnableOptionalHooks();
     G::Patches = new TWC::PatchManager();
     LOG_FAST(INFO, "Hooking and patching done");
-    G::Hints = new TWC::HintManager(G::Options->MissingMapsHint);
-    G::Cache::CharacterInfo = new TWC::CompletionCache();
-    G::Cache::WorldMapCompletion = std::make_shared<TWC::ContentSubsetCache>(G::Options->WorldProgressWidget);
-    if (auto cfg = G::Options->CharacterInfoWidget; cfg)
-    {
-        G::Cache::CharacterInfoCompletion = std::make_shared<TWC::ContentSubsetCache>(*cfg);
-    }
-    else
-    {
-        G::Cache::CharacterInfoCompletion = G::Cache::WorldMapCompletion;
-    }
-    G::Thread->AsyncTask(&TWC::CompletionCache::Update, G::Cache::CharacterInfo);
+    TWC::Options::SetupConfiguration(G::APIDefs);
+    G::Thread->AsyncTask(&TWC::CompletionCache::Refresh, G::Cache::CharacterInfo);
+
+#ifndef NDEBUG
+    Debug::Start();
+#endif
 }
 
 void AddonUnload()
 {
-    G::Thread->SyncTask(&TWC::CompletionCache::Update, G::Cache::CharacterInfo).get();
+    // G::Thread->SyncTask(&TWC::CompletionCache::Refresh, G::Cache::CharacterInfo).get();
+    TWC::Options::CleanupConfiguration(G::APIDefs);
+    delete G::Style;
     delete G::Cache::CharacterInfo;
     delete G::Hooks;
     delete G::Patches;
     delete G::Hints;
+    delete G::Completion;
     delete G::Cache::Content;
-    G::Cache::WorldMapCompletion.reset();
-    G::Cache::CharacterInfoCompletion.reset();
-    delete G::Options;
     G::Thread.reset();
-    G::Content.reset();
+#ifndef NDEBUG
+    Debug::Stop();
+#endif
 }

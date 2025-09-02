@@ -1,56 +1,49 @@
 #pragma once
-#include "Logging.hpp"
+#include "ContentAnalysis.hpp"
+#include "ThreadService.h"
+#include "model/ContentDescriptor.hpp"
+#include "model/DescribedContent.hpp"
+#include "model/MapContent.hpp"
 #include <future>
-#include <unordered_map>
-#include <unordered_set>
+#include <set>
 
 namespace TWC
 {
-struct MapContent;
 class ContentCache
 {
   public:
-    ContentCache() : initialized_(std::async(std::launch::async, &ContentCache::Initialize, this))
+    ContentCache() : Initialized()
     {
     }
 
     ~ContentCache()
     {
-        initialized_.get();
-        content_.clear();
+        Initialized.get();
     }
 
-    inline std::shared_ptr<MapContent> GetMap(uint32_t mapId)
+    std::tuple<std::shared_ptr<MapContent>, ContentDescriptor> GetMap(uint32_t id);
+
+    auto GetMaps(ContentDescriptor mask = DescriptorMask::Everything())
     {
-        initialized_.wait();
-        if (auto it = content_.find(mapId); it != content_.end())
-            return it->second;
-        return nullptr;
+        return Maps & mask;
     }
 
-    std::unordered_set<std::shared_ptr<MapContent>> GetAll()
+    DiscoverableContent GetContent(ContentDescriptor mask = DescriptorMask::Everything())
     {
-        initialized_.wait();
-        std::unordered_set<std::shared_ptr<MapContent>> uniqueContent;
-        for (const auto &[_, content] : content_)
-            uniqueContent.emplace(content);
-        return uniqueContent;
+        // lock mutex
+        return {Tasks & mask, Challanges & mask, Landmarks & mask, Vistas & mask, Waypoints & mask};
     }
 
-    template <class Predicate> std::unordered_set<std::shared_ptr<MapContent>> GetIf(Predicate pred)
-    {
-        initialized_.wait();
-        std::unordered_set<std::shared_ptr<MapContent>> uniqueContent;
-        for (const auto &[_, content] : content_)
-            if (pred(*content))
-                uniqueContent.emplace(content);
-        return uniqueContent;
-    }
+    void Update(std::set<uint32_t>, std::set<uint32_t>, std::set<std::string>);
 
   private:
-    void Initialize();
-    std::unordered_map<uint32_t, std::shared_ptr<MapContent>> content_;
-    std::future<void> initialized_;
+    void Initialize(std::set<uint32_t> excludedTasks, std::set<uint32_t> excludedPois,
+                    std::set<GW2RE::GUID_t> excludedChallanges);
+    std::future<void> Initialized;
+    DescribedContent<std::shared_ptr<MapContent>> Maps;
+    DescribedContent<GW2RE::TaskDef_t *> Tasks;
+    DescribedContent<uint32_t> Landmarks, Vistas, Waypoints;
+    DescribedContent<GW2RE::GUID_t *> Challanges;
 };
 } // namespace TWC
 namespace G::Cache

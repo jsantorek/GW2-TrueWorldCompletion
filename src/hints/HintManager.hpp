@@ -8,7 +8,7 @@ class Hint;
 class HintManager
 {
   public:
-    HintManager(Options::MissingMapsHintMode type);
+    HintManager();
     ~HintManager();
 
     void MarkStale();

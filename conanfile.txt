@@ -3,6 +3,7 @@ rcgg-nexus-api/v6.1
 imgui/1.80
 nlohmann_json/3.11.3
 magic_enum/0.9.7
+enum-flags/0.1a
 
 [generators]
 CMakeDeps
@@ -10,3 +11,6 @@ CMakeToolchain
 
 [layout]
 cmake_layout
+
+[options]
+enum-flags/*:forbid_implicit_conversions=False

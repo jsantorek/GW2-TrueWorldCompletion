@@ -1,132 +1,114 @@
 #include "Options.hpp"
-#include "Common.h"
+#include "CompletionManager.hpp"
 #include "Constants.hpp"
-#include "HintManager.hpp"
-#include "Types.h"
 #include "caching/CompletionCache.hpp"
 #include "caching/ContentCache.hpp"
-#include "caching/ContentSubsetCache.hpp"
-#include "model/Colour.hpp"
-#include "model/MapClassification.hpp"
+#include "hints/HintManager.hpp"
+#include "options/ColoursConfigurator.hpp"
+#include "options/ExclusionsConfigurator.hpp"
+#include "util/Serialization.hpp"
 #include <ContentAnalysis.hpp>
 #include <Logging.hpp>
 #include <Strings.hpp>
-#include <ThreadWorker.hpp>
-#include <Workarounds.hpp>
-#include <algorithm>
+#include <StyleManager.hpp>
+#include <format>
 #include <fstream>
 #include <imgui.h>
 #include <magic_enum/magic_enum.hpp>
-#include <nlohmann/json.hpp>
+#include <memory>
+#include <utility>
 
-namespace TWC
+void TWC::Options::Apply() const
 {
-void to_json(nlohmann::json &j, const WorldCompletionConfig &c)
-{
-    j = nlohmann::json{{"ExcludedMaps", c.MapExclusions},
-                       {"ExcludedRegions", c.RegionExclusions},
-                       {"IncludeMapsWithoutCompletionReward", c.IncludeMapsWithoutCompletionReward},
-                       {"MapSeparation", magic_enum::enum_name(c.MapSeparation)},
-                       {"ExpansionAssignment", magic_enum::enum_name(c.ExpansionAssignment)}};
+    G::Hints->SetHintType(MissingMapsHint);
+    G::Cache::Content->Update(Exclusion.Tasks, Exclusion.Landmarks, Exclusion.SkillChallanges);
+    G::Cache::CharacterInfo->Update(Exclusion, CharacterSelection);
+    G::Style->Update(Colours, ExpansionAssignment, WorldMap);
+    G::Completion->Update(WorldMap, CharacterSelection, ExpansionAssignment);
 }
 
-void from_json(const nlohmann::json &j, WorldCompletionConfig &c)
-{
-    c.MapExclusions = j["ExcludedMaps"].get<std::unordered_set<uint32_t>>();
-    c.RegionExclusions = j["ExcludedRegions"].get<std::unordered_set<uint32_t>>();
-    j.at("IncludeMapsWithoutCompletionReward").get_to(c.IncludeMapsWithoutCompletionReward);
-
-    c.MapSeparation =
-        magic_enum::enum_cast<MapClassification::WorldDivisionMode>(j.at("MapSeparation").get<std::string>())
-            .value_or(c.MapSeparation);
-    c.ExpansionAssignment = magic_enum::enum_cast<MapClassification::ExpansionAssignmentMode>(
-                                j.at("ExpansionAssignment").get<std::string>())
-                                .value_or(c.ExpansionAssignment);
-}
-} // namespace TWC
-
-using namespace TWC;
-
-Options::~Options()
-{
-    Persist();
-    G::APIDefs->Renderer.Deregister(Render);
-}
-
-Options::Options()
-{
-    auto filepath = std::filesystem::path(G::APIDefs->Paths.GetAddonDirectory(ADDON_NAME)) / ConfigFilename;
-    G::APIDefs->Renderer.Register(ERenderType_OptionsRender, Render);
-    if (!std::filesystem::exists(filepath))
-    {
-        LOG(INFO, "File not found, fresh one will be created");
-        return;
-    }
-    try
-    {
-        auto json = nlohmann::json::object();
-        json = nlohmann::json::parse(std::ifstream(filepath), nullptr, false);
-        if (auto ver = json["Version"].get<int>(); ver != ConfigVersion)
-        {
-            LOG(WARNING, "File contains incompatible data, loading skipped");
-        }
-        else
-        {
-            DefaultColorScheme = json.value("DefaultColorScheme", DefaultColorScheme);
-            WorldProgressWidget = json.at("WorldProgressWidget").get<TWC::WorldCompletionConfig>();
-            if (json.contains("CharacterInfoWidget"))
-            {
-                CharacterInfoWidget = json.at("CharacterInfoWidget").get<TWC::WorldCompletionConfig>();
-            }
-            MissingMapsHint = magic_enum::enum_cast<MissingMapsHintMode>(json.at("MissingMapsHint").get<std::string>())
-                                  .value_or(MissingMapsHint);
-        }
-    }
-    catch (const std::exception &e)
-    {
-        LOG(WARNING, "Unexpected error when parsing options:\n\t{}", e.what());
-    }
-}
-
-void Options::Persist() const
+void TWC::Options::Save() const
 {
     auto filepath = std::filesystem::path(G::APIDefs->Paths.GetAddonDirectory(ADDON_NAME)) / ConfigFilename;
     try
     {
         if (!std::filesystem::exists(filepath.parent_path()))
-        {
             std::filesystem::create_directories(filepath.parent_path());
-        }
         auto json = nlohmann::json();
         json["Version"] = ConfigVersion;
-        json["DefaultColorScheme"] = DefaultColorScheme;
-        json["WorldProgressWidget"] = WorldProgressWidget;
-        json["MissingMapsHint"] = magic_enum::enum_name(MissingMapsHint);
-        if (CharacterInfoWidget)
-            json["CharacterInfoWidget"] = CharacterInfoWidget.value();
-        std::ofstream(filepath) << json;
+        json["Colours"] = Colours;
+        json["Exclusions"] = Exclusion;
+        json["ExpansionAssignment"] = ExpansionAssignment;
+        json["WorldMap"] = WorldMap;
+        if (WorldMap != CharacterSelection)
+            json["CharacterSelection"] = CharacterSelection;
+        json["MissingMapsHint"] = MissingMapsHint;
+        std::ofstream(filepath) << json.dump(4);
     }
     catch (const std::exception &e)
     {
         LOG(WARNING, "Unexpected error when persisting options:\n\t{}", e.what());
     }
 }
-
-void Options::Render()
+std::unique_ptr<TWC::Options> TWC::Options::Load()
 {
-    if (ImGui::Button("Apply and Save"))
+    auto options = std::make_unique<TWC::Options>();
+    auto filepath = std::filesystem::path(G::APIDefs->Paths.GetAddonDirectory(ADDON_NAME)) / ConfigFilename;
+    if (!std::filesystem::exists(filepath))
     {
-        G::Options->Persist();
-        G::Cache::WorldMapCompletion->QueueRefresh(G::Options->WorldProgressWidget);
-        G::Hints->SetHintType(G::Options->MissingMapsHint);
-        if (G::Options->CharacterInfoWidget)
-        {
-            G::Cache::CharacterInfoCompletion = std::make_shared<ContentSubsetCache>(*G::Options->CharacterInfoWidget);
-        }
-        else
-        {
-            G::Cache::CharacterInfoCompletion = G::Cache::WorldMapCompletion;
-        }
+        LOG(INFO, "File not found, fresh one with default values will be created");
+        options->Save();
+        return options;
+    }
+    auto json = nlohmann::json::object();
+    json = nlohmann::json::parse(std::ifstream(filepath), nullptr, false);
+    if (auto ver = json["Version"].get<int>(); ver != ConfigVersion)
+    {
+        LOG(WARNING, "File contains incompatible data, loading skipped");
+    }
+    else
+    {
+        json.at("MissingMapsHint").get_to(options->MissingMapsHint);
+        json.at("Exclusions").get_to(options->Exclusion);
+        json.at("ExpansionAssignment").get_to(options->ExpansionAssignment);
+        json.at("WorldMap").get_to(options->WorldMap);
+        options->CharacterSelection = json.value("CharacterSelection", options->WorldMap);
+        json.at("Colours").get_to(options->Colours);
+    }
+    return options;
+}
+namespace Config
+{
+std::unique_ptr<TWC::ExclusionsConfigurator> Exclusions = nullptr;
+std::unique_ptr<TWC::ColourConfigurator> Colours = nullptr;
+} // namespace Config
+
+std::unique_ptr<TWC::Options> Configurable = nullptr;
+
+void TWC::Options::SetupConfiguration(AddonAPI *api)
+{
+    api->Renderer.Register(ERenderType_OptionsRender, RenderConfiguration);
+}
+
+void TWC::Options::CleanupConfiguration(AddonAPI *api)
+{
+    api->Renderer.Deregister(RenderConfiguration);
+    if (Configurable)
+    {
+        Configurable->Save();
+        Configurable.reset();
+    }
+}
+
+void TWC::Options::RenderConfiguration()
+{
+    if (!Configurable)
+        Configurable = Options::Load();
+
+    if (ImGui::Button("Save and Apply"))
+    {
+        Configurable->Save();
+        Configurable->Apply();
     }
     ImGui::SameLine();
     if (ImGui::Button("Get completion hint"))
@@ -137,7 +119,7 @@ void Options::Render()
     ImGui::SameLine();
     if (ImGui::Button("Cache character completion"))
     {
-        G::Thread->AsyncTask(&CompletionCache::Update, G::Cache::CharacterInfo);
+        G::Thread->AsyncTask(&CompletionCache::Refresh, G::Cache::CharacterInfo);
     }
     ImGui::SameLine();
     if (ImGui::Button("Report an issue"))
@@ -145,249 +127,77 @@ void Options::Render()
         ShellExecute(nullptr, nullptr, "https://github.com/jsantorek/GW2-TrueWorldCompletion/issues", nullptr, nullptr,
                      SW_SHOW);
     }
-    if (ImGui::BeginCombo("after WorldCompletion star clicked",
-                          magic_enum::enum_name(G::Options->MissingMapsHint).data()))
+    ImGui::Text("World completion displayed in character selection screen is cached when");
+    ImGui::BulletText("logging out of character back to character selection screen");
+    ImGui::BulletText("pressing the \"Cache character completion\" button");
+    ImGui::BulletText("loading or unloading the addon");
+    bool expansionFromChronology = Configurable->ExpansionAssignment == ExpansionAssignmentMode::MapReleaseChronology;
+    if (ImGui::Checkbox("Map is assigned to expansion during which it was released, regardless of its accessibility",
+                        &expansionFromChronology))
+        Configurable->ExpansionAssignment = expansionFromChronology ? ExpansionAssignmentMode::MapReleaseChronology
+                                                                    : ExpansionAssignmentMode::MapAccessibility;
+    if (ImGui::BeginCombo("accounted for in world map", magic_enum::enum_name(Configurable->WorldMap).data()))
+    {
+        for (auto [val, name] : magic_enum::enum_entries<Options::CompletionMode>())
+        {
+            const bool is_selected = Configurable->WorldMap == val;
+            if (ImGui::Selectable(name.data(), is_selected))
+                Configurable->WorldMap = val;
+            if (is_selected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    if (ImGui::BeginCombo("accounted for in character selection",
+                          magic_enum::enum_name(Configurable->CharacterSelection).data()))
+    {
+        for (auto [val, name] : magic_enum::enum_entries<Options::CompletionMode>())
+        {
+            const bool is_selected = Configurable->CharacterSelection == val;
+            if (ImGui::Selectable(name.data(), is_selected))
+                Configurable->CharacterSelection = val;
+            if (is_selected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::Text("Hints for missing/incomplete maps/content can be requested by:");
+    ImGui::BulletText("clicking on World Completion star on right side of World Progress bar");
+    ImGui::BulletText("with a \"Get completion hint\" button press");
+    if (ImGui::BeginCombo("after hint is requested", magic_enum::enum_name(Configurable->MissingMapsHint).data()))
     {
         for (auto [val, name] : magic_enum::enum_entries<MissingMapsHintMode>())
         {
-            const bool is_selected = G::Options->MissingMapsHint == val;
+            const bool is_selected = Configurable->MissingMapsHint == val;
             if (ImGui::Selectable(name.data(), is_selected))
-                G::Options->MissingMapsHint = val;
+                Configurable->MissingMapsHint = val;
             if (is_selected)
                 ImGui::SetItemDefaultFocus();
         }
         ImGui::EndCombo();
     }
-    ImGui::Checkbox("Use game's default colors for map progress bars", &G::Options->DefaultColorScheme);
-
-    if (ImGui::TreeNode("WorldMap completion"))
+    if (ImGui::CollapsingHeader("Content excluded from completion"))
     {
-        RenderWorldCompletionConfig(G::Options->WorldProgressWidget);
-        ImGui::TreePop();
+        ImGui::Text("The following types of content are excluded from world completion computation");
+        if (!Config::Exclusions)
+            Config::Exclusions = std::make_unique<ExclusionsConfigurator>(Configurable->Exclusion.Tasks,
+                                                                          Configurable->Exclusion.Landmarks,
+                                                                          Configurable->Exclusion.SkillChallanges);
+        if (ImGui::Button("Reset all"))
+            Configurable->Exclusion = ContentExclusion{};
+        Config::Exclusions->DrawIgnoreButtons();
+        Config::Exclusions->Render();
     }
-    int e = G::Options->CharacterInfoWidget ? 1 : 0;
-    ImGui::TextUnformatted("CharSelection screen completion uses");
-    ImGui::SameLine();
-    if (ImGui::RadioButton("WorldMap settings", &e, 0))
-        G::Options->CharacterInfoWidget = std::nullopt;
-    ImGui::SameLine();
-    if (ImGui::RadioButton("custom settings", &e, 1))
-        G::Options->CharacterInfoWidget = G::Options->WorldProgressWidget;
-    if (G::Options->CharacterInfoWidget && ImGui::TreeNode("CharSelection screen completion"))
+    if (ImGui::CollapsingHeader("Progress bar colours"))
     {
-        RenderWorldCompletionConfig(G::Options->CharacterInfoWidget.value());
-        ImGui::TreePop();
+        if (!Config::Colours)
+            Config::Colours = std::make_unique<ColourConfigurator>(Configurable->Colours);
+        if (ImGui::Button("Reset all"))
+            Configurable->Colours = Options::ProgressBarColours();
+        ImGui::SameLine();
+        if (ImGui::Button("Use game's default colours"))
+            for (auto &[_, colour] : Configurable->Colours)
+                colour = Options::ProgressBarColours::Default;
+        Config::Colours->Render();
     }
-}
-
-void Options::RenderWorldCompletionConfig(WorldCompletionConfig &cfg)
-{
-    const auto cfgId = reinterpret_cast<uint64_t>(&cfg);
-    if (ImGui::BeginCombo("accounted for in calculation", magic_enum::enum_name(cfg.MapSeparation).data()))
-    {
-        for (auto [val, name] : magic_enum::enum_entries<MapClassification::WorldDivisionMode>())
-        {
-            const bool is_selected = cfg.MapSeparation == val;
-            if (ImGui::Selectable(name.data(), is_selected))
-                cfg.MapSeparation = val;
-            if (is_selected)
-                ImGui::SetItemDefaultFocus();
-        }
-        ImGui::EndCombo();
-    }
-    if (ImGui::BeginCombo("determines its expansion assignment", magic_enum::enum_name(cfg.ExpansionAssignment).data()))
-    {
-        for (auto [val, name] : magic_enum::enum_entries<MapClassification::ExpansionAssignmentMode>())
-        {
-            const bool is_selected = cfg.ExpansionAssignment == val;
-            if (ImGui::Selectable(name.data(), is_selected))
-                cfg.ExpansionAssignment = val;
-            if (is_selected)
-                ImGui::SetItemDefaultFocus();
-        }
-        ImGui::EndCombo();
-    }
-    ImGui::Checkbox(std::format("Maps without completion reward####{}", cfgId).c_str(),
-                    &cfg.IncludeMapsWithoutCompletionReward);
-    if (cfg.IncludeMapsWithoutCompletionReward && ImGui::TreeNode("Included regions"))
-    {
-        constexpr auto Regions = std::array<std::pair<uint32_t, const char *>, 2>{
-            std::pair<uint32_t, const char *>{6, "Player vs. Player"}, {7, "World vs. World"}};
-        for (const auto &[id, name] : Regions)
-        {
-            bool isActive = !cfg.RegionExclusions.contains(id);
-            if (ImGui::Checkbox(name, &isActive))
-            {
-                if (isActive)
-                    cfg.RegionExclusions.erase(id);
-                else
-                    cfg.RegionExclusions.emplace(id);
-            }
-        }
-        ImGui::TreePop();
-    }
-    if (cfg.IncludeMapsWithoutCompletionReward && ImGui::TreeNode("Optional map inclusions"))
-    {
-        static auto ExplicitInclusions = Workarounds::GetCategorizedExplicitlyExcludableMaps();
-        for (auto &[cat, maps] : ExplicitInclusions)
-        {
-            ImGui::TextUnformatted(cat);
-            for (const auto &[id, name] : maps)
-            {
-                bool isActive = !cfg.MapExclusions.contains(id);
-                if (ImGui::Checkbox(name, &isActive))
-                {
-                    if (isActive)
-                        cfg.MapExclusions.erase(id);
-                    else
-                        cfg.MapExclusions.emplace(id);
-                }
-            }
-        }
-        ImGui::TextUnformatted("Custom");
-        static auto CustomInclusions = std::vector<uint32_t>();
-        for (const auto &id : CustomInclusions)
-        {
-            bool isActive = !cfg.MapExclusions.contains(id);
-            if (ImGui::Checkbox(std::format("#{}", id).c_str(), &isActive))
-            {
-                if (isActive)
-                    cfg.MapExclusions.erase(id);
-                else
-                    cfg.MapExclusions.emplace(id);
-            }
-        }
-        static uint32_t newId = 0;
-        static std::string error = "";
-        if (ImGui::InputScalar("Add Map", ImGuiDataType_U32, &newId, nullptr, nullptr, nullptr,
-                               ImGuiInputTextFlags_EnterReturnsTrue))
-        {
-            if (auto map = G::Cache::Content->GetMap(newId); !map || !map->Def->Name)
-            {
-                error = "Map#%u couldn't be found or has no discoverable content.";
-            }
-            else if (Workarounds::IsMapExplicitlyExcludable(newId))
-            {
-                error = "Map#%u already available for explicit exclusion.";
-            }
-            else if (std::any_of(CustomInclusions.begin(), CustomInclusions.end(),
-                                 [&](auto id) { return id == newId; }))
-            {
-                error = "Map#%u already added.";
-            }
-            else
-            {
-                if (map->Def->ID != newId)
-                    error = std::format("Map#{} uses content of Map#{}", newId, map->Def->ID);
-                else
-                    error = "";
-                CustomInclusions.emplace_back(newId);
-                newId = 0;
-            }
-        }
-        if (!error.empty())
-        {
-            ImGui::TextColored({1, 0, 0, 1}, error.c_str(), newId);
-        }
-        ImGui::TreePop();
-    }
-}
-
-Colour4 Options::GetMapProgressBarColour(MapClassification classification) const
-{
-    if (DefaultColorScheme)
-        return Colours::Default;
-    if (classification.Continent == MapClassification::TheMists)
-        return Colours::TheMists;
-    switch (WorldProgressWidget.ExpansionAssignment == MapClassification::MapAccessibility ? classification.Expansion
-                                                                                           : classification.Chronology)
-    {
-    case MapClassification::Core:
-        return Colours::Core;
-    case MapClassification::HeartOfThorns:
-        return Colours::HeartOfThorns;
-    case MapClassification::PathOfFire:
-        return Colours::PathOfFire;
-    case MapClassification::EndOfDragons:
-        return Colours::EndOfDragons;
-    case MapClassification::SecretsOfTheObscure:
-        return Colours::SecretsOfTheObscure;
-    case MapClassification::JanthirWilds:
-        return Colours::JanthirWilds;
-    default:
-        break;
-    }
-    return Colours::Unknown;
-}
-
-Colour4 Options::GetWorldProgressBarColour(MapClassification classification) const
-{
-    if (DefaultColorScheme)
-        return Colours::Default;
-    if (WorldProgressWidget.MapSeparation == MapClassification::AllMapsCollectively ||
-        WorldProgressWidget.MapSeparation == MapClassification::CurrentOrEarlierExpansionMaps)
-    {
-        return Colours::Legendary;
-    }
-    else if (WorldProgressWidget.MapSeparation == MapClassification::CurrentContinentMapsOnly)
-    {
-        switch (classification.Continent)
-        {
-        case MapClassification::TheMists:
-            return Colours::TheMists;
-        case MapClassification::Tyria:
-            return Colours::Default;
-        default:
-            break;
-        }
-    }
-    else if (WorldProgressWidget.MapSeparation == MapClassification::CurrentExpansionMapsOnly)
-    {
-        return GetMapProgressBarColour(classification);
-    }
-    return Colours::Unknown;
-}
-
-uint32_t Options::GetWorldProgressBarTitle(MapClassification classification) const
-{
-    if (WorldProgressWidget.MapSeparation == MapClassification::AllMapsCollectively ||
-        WorldProgressWidget.MapSeparation == MapClassification::CurrentOrEarlierExpansionMaps)
-    {
-        return Strings::Legendary;
-    }
-    else if (WorldProgressWidget.MapSeparation == MapClassification::CurrentContinentMapsOnly)
-    {
-        switch (classification.Continent)
-        {
-        case MapClassification::TheMists:
-            return Strings::TheMists;
-        case MapClassification::Tyria:
-            return Strings::Tyria;
-        default:
-            break;
-        }
-    }
-    else if (WorldProgressWidget.MapSeparation == MapClassification::CurrentExpansionMapsOnly)
-    {
-        if (classification.Continent == MapClassification::TheMists)
-            return Strings::TheMists;
-        switch (classification.Expansion)
-        {
-        case MapClassification::Core:
-            return Strings::CentralTyria;
-        case MapClassification::HeartOfThorns:
-            return Strings::HeartOfThorns;
-        case MapClassification::PathOfFire:
-            return Strings::PathOfFire;
-        case MapClassification::EndOfDragons:
-            return Strings::EndOfDragons;
-        case MapClassification::SecretsOfTheObscure:
-            return Strings::SecretsOfTheObscure;
-        case MapClassification::JanthirWilds:
-            return Strings::JanthirWilds;
-        default:
-            break;
-        }
-    }
-    return Strings::QuestionMarks;
 }
