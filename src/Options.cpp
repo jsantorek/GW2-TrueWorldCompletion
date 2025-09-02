@@ -60,20 +60,27 @@ std::unique_ptr<TWC::Options> TWC::Options::Load()
         options->Save();
         return options;
     }
-    auto json = nlohmann::json::object();
-    json = nlohmann::json::parse(std::ifstream(filepath), nullptr, false);
-    if (auto ver = json["Version"].get<int>(); ver != ConfigVersion)
+    try
     {
-        LOG(WARNING, "File contains incompatible data, loading skipped");
+        auto json = nlohmann::json::object();
+        json = nlohmann::json::parse(std::ifstream(filepath));
+        if (auto ver = json.value("Version", 0); ver != ConfigVersion)
+        {
+            LOG(WARNING, "File contains incompatible data, loading skipped");
+        }
+        else
+        {
+            json.at("MissingMapsHint").get_to(options->MissingMapsHint);
+            json.at("Exclusions").get_to(options->Exclusion);
+            json.at("ExpansionAssignment").get_to(options->ExpansionAssignment);
+            json.at("WorldMap").get_to(options->WorldMap);
+            options->CharacterSelection = json.value("CharacterSelection", options->WorldMap);
+            json.at("Colours").get_to(options->Colours);
+        }
     }
-    else
+    catch (const std::exception &e)
     {
-        json.at("MissingMapsHint").get_to(options->MissingMapsHint);
-        json.at("Exclusions").get_to(options->Exclusion);
-        json.at("ExpansionAssignment").get_to(options->ExpansionAssignment);
-        json.at("WorldMap").get_to(options->WorldMap);
-        options->CharacterSelection = json.value("CharacterSelection", options->WorldMap);
-        json.at("Colours").get_to(options->Colours);
+        LOG(WARNING, "Unexpected error when parsing options:\n\t{}", e.what());
     }
     return options;
 }

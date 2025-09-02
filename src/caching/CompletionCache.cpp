@@ -71,8 +71,8 @@ void TWC::CompletionCache::Load()
     try
     {
         auto json = nlohmann::json::object();
-        json = nlohmann::json::parse(std::ifstream(filepath), nullptr, false);
-        if (auto ver = json["Version"].get<decltype(CacheVersion)>(); ver != CacheVersion)
+        json = nlohmann::json::parse(std::ifstream(filepath));
+        if (auto ver = json.value("Version", 0); ver != CacheVersion)
         {
             LOG(WARNING, "File contains incompatible data, loading skipped");
         }
