@@ -38,7 +38,7 @@ class ContentCache
 
   private:
     void Initialize(std::set<uint32_t> excludedTasks, std::set<uint32_t> excludedPois,
-                    std::set<GW2RE::GUID_t> excludedChallanges);
+                    std::set<std::string> excludedChallanges);
     std::future<void> Initialized;
     DescribedContent<std::shared_ptr<MapContent>> Maps;
     DescribedContent<GW2RE::TaskDef_t *> Tasks;

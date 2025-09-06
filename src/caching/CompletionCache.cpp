@@ -50,11 +50,10 @@ std::optional<TWC::Completion> TWC::CompletionCache::GetCompletion(const std::st
     std::lock_guard<std::mutex> lock(mutex_);
     if (auto it = completion_.find(characterId); it != completion_.end())
     {
-        if (mapId == it->second.MapId)
-            return it->second.Progress;
-        else
+        if (mapId != it->second.MapId)
             LOG(WARNING, "Requested cached completion of a character [{}] on MapId={}, but only MapId={} was found.",
                 characterId, mapId, it->second.MapId);
+        return it->second.Progress;
     }
     return std::nullopt;
 }
