@@ -1,5 +1,5 @@
 #pragma once
-#include "Game/Content/MapDef.h"
+#include "Game/Map/MapDef.h"
 #include <vector>
 namespace TWC
 {

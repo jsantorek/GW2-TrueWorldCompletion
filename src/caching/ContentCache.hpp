@@ -41,7 +41,7 @@ class ContentCache
                     std::set<std::string> excludedChallanges);
     std::future<void> Initialized;
     DescribedContent<std::shared_ptr<MapContent>> Maps;
-    DescribedContent<GW2RE::TaskDef_t *> Tasks;
+    DescribedContent<GW2RE::TaskSubRegionCommonDef_t *> Tasks;
     DescribedContent<uint32_t> Landmarks, Vistas, Waypoints;
     DescribedContent<GW2RE::GUID_t *> Challanges;
 };
