@@ -1,6 +1,6 @@
 #pragma once
 #include "ContentAnalysis.hpp"
-#include "ThreadService.h"
+#include "Tools/ThreadService.h"
 #include "model/ContentDescriptor.hpp"
 #include "model/DescribedContent.hpp"
 #include "model/MapContent.hpp"

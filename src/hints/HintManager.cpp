@@ -1,7 +1,7 @@
 #include "HintManager.hpp"
 #include "Hint.hpp"
 #include "Logging.hpp"
-#include "ThreadService.h"
+#include "Tools/ThreadService.h"
 #include <memory>
 #include <mutex>
 

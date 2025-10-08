@@ -2,7 +2,7 @@
 #include "Logging.hpp"
 #include "Options.hpp"
 #include "StyleManager.hpp"
-#include "ThreadService.h"
+#include "Tools/ThreadService.h"
 #include "caching/CompletionCache.hpp"
 #include "caching/ContentCache.hpp"
 #include "hints/HintManager.hpp"
