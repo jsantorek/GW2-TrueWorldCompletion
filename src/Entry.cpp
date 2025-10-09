@@ -11,7 +11,7 @@
 #include <Nexus.h>
 #include <imgui.h>
 #ifndef NDEBUG
-#include "debug/Debug.hpp"
+#include "Debug.hpp"
 #endif
 
 void AddonLoad(AddonAPI *aApi);
