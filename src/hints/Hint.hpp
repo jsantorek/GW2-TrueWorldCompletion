@@ -8,12 +8,12 @@ class Hint
   public:
     Hint() = default;
     virtual ~Hint() = default;
-    virtual void Activate() = 0;
-
+    void Request();
     virtual void Update(std::vector<const GW2RE::MapDef_t *> maps)
     {
         incomplete = std::move(maps);
     }
+    virtual void Activate() = 0;
 
   protected:
     std::vector<const GW2RE::MapDef_t *> incomplete;

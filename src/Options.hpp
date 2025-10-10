@@ -73,5 +73,7 @@ class Options
         {
         }
     } Colours;
+    bool ShowProgressBarInAllDiscoveryAlerts = true;
+    bool ShowCompletionInfoInAllLoadingScreens = true;
 };
 } // namespace TWC

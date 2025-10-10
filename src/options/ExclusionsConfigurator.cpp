@@ -105,8 +105,6 @@ void TWC::ExclusionsConfigurator::AddExplicitExclusions()
     Maps.emplace_back(1304, "Mad King's Raceway")
         .With<ContentType::Waypoint>(2971, Pois, ExclusionReason::Seasonal_Halloween);
 
-    Maps.emplace_back(1316, "Mists Rift").With<ContentType::Waypoint>(3016, Pois, ExclusionReason::Seasonal_Halloween);
-
     Maps.emplace_back(911, "Dragon Ball Arena")
         .With<ContentType::Waypoint>(1803, Pois, ExclusionReason::Seasonal_LunarNewYear)
         .With<ContentType::Waypoint>(1804, Pois, ExclusionReason::Seasonal_LunarNewYear);

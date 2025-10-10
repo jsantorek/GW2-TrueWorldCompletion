@@ -74,12 +74,11 @@ void AddonLoad(AddonAPI *aApi)
         LOG_FAST(CRITICAL, std::format("Critical section failure(s):\n\t{}\nAddon disabled!", e.what()).c_str());
         return;
     }
+    G::Patches = new TWC::PatchManager();
     TWC::Options::Load()->Apply();
     G::Hooks->EnableOptionalHooks();
-    G::Patches = new TWC::PatchManager();
     LOG_FAST(INFO, "Hooking and patching done");
     TWC::Options::SetupConfiguration(G::APIDefs);
-    G::Thread->AsyncTask(&TWC::CompletionCache::Refresh, G::Cache::CharacterInfo);
 
 #ifndef NDEBUG
     Debug::Start();
@@ -88,7 +87,6 @@ void AddonLoad(AddonAPI *aApi)
 
 void AddonUnload()
 {
-    // G::Thread->SyncTask(&TWC::CompletionCache::Refresh, G::Cache::CharacterInfo).get();
     TWC::Options::CleanupConfiguration(G::APIDefs);
     delete G::Style;
     delete G::Cache::CharacterInfo;

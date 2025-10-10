@@ -14,6 +14,14 @@ void TWC::HintManager::MarkStale()
     stale_ = true;
 }
 
+void TWC::Hint::Request()
+{
+    if (incomplete.empty())
+        G::APIDefs->UI.SendAlert("This character has everything unlocked!");
+    else
+        this->Activate();
+}
+
 void TWC::HintManager::SetHintType(Options::MissingMapsHintMode type)
 {
     auto lock = std::lock_guard(mutex_);
@@ -48,5 +56,5 @@ void TWC::HintManager::RequestHint()
             G::Thread->SyncTask(&HintManager::RefreshHint, this).get();
         stale_ = false;
     }
-    hint_->Activate();
+    hint_->Request();
 }
