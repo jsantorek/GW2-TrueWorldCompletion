@@ -37,6 +37,7 @@ class ContentCache
     void Update(std::set<uint32_t>, std::set<uint32_t>, std::set<std::string>);
 
   private:
+    void MakeCombinedContent(uint32_t base, std::vector<uint32_t> ids);
     void Initialize(std::set<uint32_t> excludedTasks, std::set<uint32_t> excludedPois,
                     std::set<std::string> excludedChallanges);
     std::future<void> Initialized;

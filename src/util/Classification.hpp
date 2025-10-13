@@ -13,7 +13,7 @@ inline auto DetermineExpansionChronologically(uint32_t mapId, uint32_t regionId)
         return ContentFeature::EXPANSION_EndOfDragons;
     if (regionId == 48)
         return ContentFeature::EXPANSION_SecretsOfTheObscure;
-    if (regionId == 18)
+    if (regionId == 18 || mapId == 1566)
         return ContentFeature::EXPANSION_JanthirWilds;
     return ContentFeature::EXPANSION_None;
 }

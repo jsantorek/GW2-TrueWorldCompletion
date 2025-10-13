@@ -60,8 +60,15 @@ void TWC::ExclusionsConfigurator::AddExplicitExclusions()
         .With<ContentType::PointOfInterest>(1023, Pois, ExclusionReason::Exclusive_Story);
 
     Maps.emplace_back(111, "Victory or Death")
+        .With<ContentType::Waypoint>(1631, Pois, ExclusionReason::Exclusive_Story)
+        .With<ContentType::Waypoint>(1632, Pois, ExclusionReason::Exclusive_Story)
+        .With<ContentType::Waypoint>(859, Pois, ExclusionReason::Exclusive_Story)
+        .With<ContentType::PointOfInterest>(1559, Pois, ExclusionReason::Exclusive_Story)
+        .With<ContentType::PointOfInterest>(1560, Pois, ExclusionReason::Exclusive_Story)
+        .With<ContentType::PointOfInterest>(1561, Pois, ExclusionReason::Exclusive_Story)
+        .With<ContentType::PointOfInterest>(1562, Pois, ExclusionReason::Exclusive_Story)
+        .With<ContentType::PointOfInterest>(862, Pois, ExclusionReason::Exclusive_Story)
         .With<ContentType::PointOfInterest>(863, Pois, ExclusionReason::Inaccessible);
-    // maps.back().With<ContentType::PointOfInterest>(0, Pois, ExclusionReason::Exclusive_Story);
 
     Maps.emplace_back(901, "Molten Furnace")
         .With<ContentType::Waypoint>(1799, Pois, ExclusionReason::Historical)

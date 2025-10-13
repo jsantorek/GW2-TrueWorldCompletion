@@ -118,40 +118,63 @@ void TWC::Options::RenderConfiguration()
     if (!Configurable)
         Configurable = Options::Load();
 
-    if (ImGui::Button("Save and Apply"))
+    if (ImGui::Button("Save and apply"))
     {
         Configurable->Save();
         Configurable->Apply();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Get completion hint"))
-    {
-        G::Hints->MarkStale();
-        G::Hints->RequestHint();
-    }
+    if (ImGui::Button("Reset defaults"))
+        Configurable = std::make_unique<Options>();
     ImGui::SameLine();
-    if (ImGui::Button("Cache character completion"))
-    {
-        G::Thread->AsyncTask(&CompletionCache::Refresh, G::Cache::CharacterInfo);
-    }
+    if (ImGui::Button("Reload from file"))
+        Configurable = Options::Load();
     ImGui::SameLine();
-    if (ImGui::Button("Report an issue"))
+    if (ImGui::Button("Report an issue (GitHub)"))
     {
         ShellExecute(nullptr, nullptr, "https://github.com/jsantorek/GW2-TrueWorldCompletion/issues", nullptr, nullptr,
                      SW_SHOW);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Get help (Discord)"))
+    {
+        ShellExecute(nullptr, nullptr, "https://discord.com/channels/410828272679518241/1336830031053324308", nullptr,
+                     nullptr, SW_SHOW);
     }
     if (ImGui::BeginTabBar("OptionsCategories", ImGuiTabBarFlags_None))
     {
         if (ImGui::BeginTabItem("General"))
         {
+            if (ImGui::Button("Get completion hint"))
+            {
+                G::Hints->MarkStale();
+                G::Hints->RequestHint();
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::TextUnformatted("Hints for missing/incomplete maps/content can be requested by:"
+                                       "\n\t- clicking on World Completion star on right side of World Progress bar"
+                                       "\n\t- pressing this button");
+
+                ImGui::EndTooltip();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cache character completion"))
+                G::Thread->AsyncTask(&CompletionCache::Refresh, G::Cache::CharacterInfo);
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::TextUnformatted("World completion displayed in character selection screen is cached when"
+                                       "\n\t- logging out of character back to character selection screen"
+                                       "\n\t- shutting down game"
+                                       "\n\t- pressing this button");
+                ImGui::EndTooltip();
+            }
             ImGui::Checkbox("Map Content Unlocked alerts display progress bar in all maps",
                             &Configurable->ShowProgressBarInAllDiscoveryAlerts);
             ImGui::Checkbox("Map Load Scene screens display completion info in all maps",
                             &Configurable->ShowCompletionInfoInAllLoadingScreens);
-            ImGui::Text("World completion displayed in character selection screen is cached when");
-            ImGui::BulletText("logging out of character back to character selection screen");
-            ImGui::BulletText("shutting down game");
-            ImGui::BulletText("pressing the \"Cache character completion\" button");
             bool expansionFromChronology =
                 Configurable->ExpansionAssignment == ExpansionAssignmentMode::MapReleaseChronology;
             if (ImGui::Checkbox(
@@ -185,9 +208,6 @@ void TWC::Options::RenderConfiguration()
                 }
                 ImGui::EndCombo();
             }
-            ImGui::Text("Hints for missing/incomplete maps/content can be requested by:");
-            ImGui::BulletText("clicking on World Completion star on right side of World Progress bar");
-            ImGui::BulletText("with a \"Get completion hint\" button press");
             if (ImGui::BeginCombo("after hint is requested",
                                   magic_enum::enum_name(Configurable->MissingMapsHint).data()))
             {
@@ -205,12 +225,11 @@ void TWC::Options::RenderConfiguration()
         }
         if (ImGui::BeginTabItem("Content excluded from completion"))
         {
-            ImGui::Text("The following types of content are excluded from world completion computation");
             if (!Config::Exclusions)
                 Config::Exclusions = std::make_unique<ExclusionsConfigurator>(Configurable->Exclusion.Tasks,
                                                                               Configurable->Exclusion.Landmarks,
                                                                               Configurable->Exclusion.SkillChallanges);
-            if (ImGui::Button("Reset all"))
+            if (ImGui::Button("Use addon defaults"))
                 Configurable->Exclusion = ContentExclusion{};
             Config::Exclusions->DrawIgnoreButtons();
             Config::Exclusions->Render();
@@ -221,10 +240,10 @@ void TWC::Options::RenderConfiguration()
     {
         if (!Config::Colours)
             Config::Colours = std::make_unique<ColourConfigurator>(Configurable->Colours);
-        if (ImGui::Button("Reset all"))
+        if (ImGui::Button("Use addon defaults"))
             Configurable->Colours = Options::ProgressBarColours();
         ImGui::SameLine();
-        if (ImGui::Button("Use game's default colours"))
+        if (ImGui::Button("Use game defaults"))
             for (auto &[_, colour] : Configurable->Colours)
                 colour = Options::ProgressBarColours::Default;
         Config::Colours->Render();
