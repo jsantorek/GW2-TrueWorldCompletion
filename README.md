@@ -1,9 +1,9 @@
 # GW2-TrueWorldCompletion
 
 Public part of the Guild Wars 2 addon **True World Completion**.
-This repository contains the build and dependency setup, basic instructions, option explanations, and non-code assets unrelated to reverse engineering.
+This repository contains the build and dependency setup, basic instructions, option explanations, and code unrelated to reverse engineering.
 
-The addon loads using [Nexus](https://github.com/RaidcoreGG/Nexus) and modifies the game's display of map/world completion beyond the default — including maps that grant a reward upon reaching 100% and progress toward the **Gift of Exploration**.
+The addon loads using [Nexus](https://github.com/RaidcoreGG/Nexus) and modifies the game's display of map/world completion beyond the default — maps that grant a reward upon reaching 100% and progress toward the **Gift of Exploration**.
 
 These enhancements include numerous points of interest, vistas, and other discoverable content per character on maps such as:
 - Story-exclusive instances
@@ -18,7 +18,7 @@ Furthermore, world completion progress can be separated:
 - Between “continents” (Tyria / The Mists)
 - Between each expansion cycle
 
-Finally, loading screens and content discovery alerts on maps without a 100% reward can (optionally) display progress toward completion and provide hints for incomplete maps.
+Finally, addon provides hinting system guiding toward incomplete maps, while loading screens and content discovery alerts on maps without a 100% reward can (optionally) display progress toward completion.
 
 Notably, the addon **does not modify** the actual amount of content required to earn any reward — whether per map or globally. It is purely a **graphical interface adjustment**.
 
@@ -60,7 +60,7 @@ The entire build infrastructure is available as a [Docker container](https://git
    cmake --build --preset=conan-release
    ```
 
-Once built, place the compiled `True_World_Completion.dll` library in the game’s `addons` subdirectory. Then, launch the game with **Nexus** loaded through its menu.
+Once built, place the compiled `True_World_Completion.dll` library in the game’s `addons` subdirectory. Then, launch the game with **Nexus** and load "True World COmpletion" through its menu.
 
 ---
 
