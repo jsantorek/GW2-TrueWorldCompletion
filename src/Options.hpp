@@ -46,8 +46,24 @@ class Options
     } ExpansionAssignment = MapReleaseChronology;
     struct ContentExclusion
     {
-        std::set<uint32_t> Landmarks = {942, 3204, 863, 1984, 1835, 1836, 1799, 1800, 1801, 1807, 1808, 1810, 1763};
-        std::set<uint32_t> Tasks = {414};
+        std::set<uint32_t> Landmarks = {
+            942, // inaccessible WP in AC(story) https://wiki.guildwars2.com/wiki/Votive_Cathedral
+            3204, // invisible, randomly unlocked WP in https://wiki.guildwars2.com/wiki/Mists_Arena
+            863, // inaccessible with regular means PoI https://wiki.guildwars2.com/wiki/Zhaitan%27s_Last_Stand 
+            1984, // inaccessible WP in Verdant Brink duplicate
+            1835, // historical WP in Resealing the Bloody Prince
+            1836, // historical WP in The Reliquary
+            1799, // historical WP in Molten Furnace
+            1800, // historical WP in Molten Furnace
+            1801, // historical WP in Molten Furnace
+            1807, // historical WP in Aetherblade Retreat
+            1808, // historical WP in Aetherblade Retreat
+            1810, // historical WP in Aetherblade Retreat
+            1763 // historical WP in retired variant of Toypocalypse
+        };
+        std::set<uint32_t> Tasks = {
+            414 // story exclusive duplicate of https://wiki.guildwars2.com/wiki/Help_Aksim_care_for_and_train_raptors
+        };
         std::set<std::string> SkillChallanges = {};
     } Exclusion;
     struct ProgressBarColours : public std::unordered_map<ContentFeature, std::array<float, 4>>

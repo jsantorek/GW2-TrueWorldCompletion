@@ -57,7 +57,7 @@ void TWC::ExclusionsConfigurator::AddExplicitExclusions()
         .With<ContentType::PointOfInterest>(1276, Pois, ExclusionReason::Exclusive_Story);
 
     Maps.emplace_back(775, "Temple of the Forgotten God")
-        .With<ContentType::PointOfInterest>(1023, Pois, ExclusionReason::Exclusive_Story);
+        .With<ContentType::PointOfInterest>(1282, Pois, ExclusionReason::Exclusive_Story);
 
     Maps.emplace_back(111, "Victory or Death")
         .With<ContentType::Waypoint>(1631, Pois, ExclusionReason::Exclusive_Story)
