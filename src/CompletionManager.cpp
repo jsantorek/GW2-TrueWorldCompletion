@@ -40,9 +40,6 @@ std::function<TWC::ContentDescriptor(void)> TWC::CompletionManager::MakeMask(TWC
     case Options::CurrentExpansionMapsOnly:
         return []() {
             auto dscr = TWC::ContentAnalysis::ClassifyCurrentMap();
-            // if (dscr.count(ContentFeature::EXPANSION_None) ||
-            //     (dscr.count(ContentFeature::EXPANSION_Optional) && UseAccessColours))
-            //     return {Strings::CentralTyria, Core};
             return dscr & (DescriptorMask::Expansions() | ContentFeature::EXPANSION_None);
         };
     case Options::AllMapsWithCompletionReward:

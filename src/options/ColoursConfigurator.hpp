@@ -1,5 +1,4 @@
 #pragma once
-#include <model/Colour.hpp>
 #include <model/ContentDescriptor.hpp>
 #include <unordered_map>
 #include <vector>
