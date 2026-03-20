@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.5.0...3.31.2)
+find_package(Git)
 execute_process(
     COMMAND
         ${GIT_EXECUTABLE} describe --tags --dirty --abbrev=0 --match "v*.*.*"
@@ -24,7 +25,7 @@ else()
     string(REPLACE ";" "." PROJECT_VERSION "${PROJECT_VERSION}")
 endif()
 
-project(TrueWorldCompletion VERSION "5.3.6" LANGUAGES C CXX)
+project(TrueWorldCompletion VERSION ${PROJECT_VERSION} LANGUAGES C CXX)
 message("${PROJECT_NAME} v${PROJECT_VERSION}")
 
 find_package(rcgg-nexus-api)

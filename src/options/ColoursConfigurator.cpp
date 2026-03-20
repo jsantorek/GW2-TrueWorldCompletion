@@ -3,18 +3,20 @@
 #include <magic_enum/magic_enum.hpp>
 #include <options/ColoursConfigurator.hpp>
 
-TWC::ColourConfigurator::ColourConfigurator(std::unordered_map<ContentFeature, std::array<float, 4>> &colours)
-    : Colours(colours), NamedDescriptors({
-                            {"Core", ContentFeature::EXPANSION_None},
-                            {"Heart of Thorns", ContentFeature::EXPANSION_HeartOfThorns},
-                            {"Path of Fire", ContentFeature::EXPANSION_PathOfFire},
-                            {"End of Dragons", ContentFeature::EXPANSION_EndOfDragons},
-                            {"Secrets of the Obscure", ContentFeature::EXPANSION_SecretsOfTheObscure},
-                            {"Janthir Wilds", ContentFeature::EXPANSION_JanthirWilds},
-                            {"Visions of Eternity", ContentFeature::EXPANSION_VisionsOfEternity},
-                            {"The Mists", ContentFeature::CONTINENT_TheMists},
-                            {"Multiple combined", static_cast<ContentFeature>(DescriptorMask::Everything().underlying_value())},
-                        })
+using namespace TWC::Retired;
+TWC::ColourConfigurator::ColourConfigurator(std::unordered_map<Retired::ContentFeature, std::array<float, 4>> &colours)
+    : Colours(colours),
+      NamedDescriptors({
+          {"Core", Retired::ContentFeature::EXPANSION_None},
+          {"Heart of Thorns", Retired::ContentFeature::EXPANSION_HeartOfThorns},
+          {"Path of Fire", Retired::ContentFeature::EXPANSION_PathOfFire},
+          {"End of Dragons", Retired::ContentFeature::EXPANSION_EndOfDragons},
+          {"Secrets of the Obscure", Retired::ContentFeature::EXPANSION_SecretsOfTheObscure},
+          {"Janthir Wilds", Retired::ContentFeature::EXPANSION_JanthirWilds},
+          {"Visions of Eternity", Retired::ContentFeature::EXPANSION_VisionsOfEternity},
+          {"The Mists", Retired::ContentFeature::CONTINENT_TheMists},
+          {"Multiple combined", static_cast<Retired::ContentFeature>(DescriptorMask::Everything().underlying_value())},
+      })
 {
 }
 

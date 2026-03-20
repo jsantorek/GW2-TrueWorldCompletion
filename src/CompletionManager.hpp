@@ -9,12 +9,12 @@ class CompletionManager
   public:
     CompletionManager();
     void Update(TWC::Options::CompletionMode, TWC::Options::CompletionMode, Options::ExpansionAssignmentMode);
-    std::function<ContentDescriptor(void)> WorldCompletionMask;
-    std::function<ContentDescriptor(void)> CharacterSelectionMask;
+    std::function<Retired::ContentDescriptor(void)> WorldCompletionMask;
+    std::function<Retired::ContentDescriptor(void)> CharacterSelectionMask;
 
   private:
-    std::function<ContentDescriptor(void)> MakeMask(TWC::Options::CompletionMode);
-    ContentDescriptor CoreMask = ContentDescriptor(flags::empty_t{});
+    std::function<Retired::ContentDescriptor(void)> MakeMask(TWC::Options::CompletionMode);
+    Retired::ContentDescriptor CoreMask = Retired::ContentDescriptor(flags::empty_t{});
 };
 } // namespace TWC
 namespace G

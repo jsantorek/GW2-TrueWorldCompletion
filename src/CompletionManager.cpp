@@ -1,47 +1,47 @@
 #include "CompletionManager.hpp"
-#include "ContentAnalysis.hpp"
-#include "Logging.hpp"
 #include "model/ContentDescriptor.hpp"
 #include <flags/flags.hpp>
 
-std::string to_string(TWC::ContentDescriptor dscr)
+using namespace TWC::Retired;
+std::string to_string(ContentDescriptor dscr)
 {
     std::string res = "";
-    for (const auto &flag : magic_enum::enum_values<TWC::ContentFeature>())
+    for (const auto &flag : magic_enum::enum_values<ContentFeature>())
         if (dscr.count(flag))
             res += std::string(" ").append(magic_enum::enum_name(flag));
     return res.empty() ? res : res.substr(1);
 }
+
 TWC::CompletionManager::CompletionManager ::CompletionManager()
     : WorldCompletionMask([]() { return ContentDescriptor(flags::empty_t{}); }),
       CharacterSelectionMask([]() { return ContentDescriptor(flags::empty_t{}); })
 {
 }
 
-std::function<TWC::ContentDescriptor(void)> TWC::CompletionManager::MakeMask(TWC::Options::CompletionMode mode)
+std::function<ContentDescriptor(void)> TWC::CompletionManager::MakeMask(TWC::Options::CompletionMode mode)
 {
     switch (mode)
     {
     case Options::AllMapsCollectively:
         return []() { return DescriptorMask::Everything(); };
-    case Options::CurrentOrEarlierExpansionMaps:
-        return [core = CoreMask]() {
-            auto dscr = TWC::ContentAnalysis::ClassifyCurrentMap();
-            if (dscr & core)
-                return ContentDescriptor(ContentFeature::EXPANSION_None);
-            dscr &= DescriptorMask::Expansions();
-            return DescriptorMask::ThisOrEarlierExpansion(dscr);
-        };
-    case Options::CurrentContinentMapsOnly:
-        return []() {
-            auto dscr = TWC::ContentAnalysis::ClassifyCurrentMap();
-            return dscr & DescriptorMask::Continents();
-        };
-    case Options::CurrentExpansionMapsOnly:
-        return []() {
-            auto dscr = TWC::ContentAnalysis::ClassifyCurrentMap();
-            return dscr & (DescriptorMask::Expansions() | ContentFeature::EXPANSION_None);
-        };
+    // case Options::CurrentOrEarlierExpansionMaps:
+    //     return [core = CoreMask]() {
+    //         auto dscr = TWC::ContentAnalysis::ClassifyCurrentMap();
+    //         if (dscr & core)
+    //             return ContentDescriptor(ContentFeature::EXPANSION_None);
+    //         dscr &= DescriptorMask::Expansions();
+    //         return DescriptorMask::ThisOrEarlierExpansion(dscr);
+    //     };
+    // case Options::CurrentContinentMapsOnly:
+    //     return []() {
+    //         auto dscr = TWC::ContentAnalysis::ClassifyCurrentMap();
+    //         return dscr & DescriptorMask::Continents();
+    //     };
+    // case Options::CurrentExpansionMapsOnly:
+    //     return []() {
+    //         auto dscr = TWC::ContentAnalysis::ClassifyCurrentMap();
+    //         return dscr & (DescriptorMask::Expansions() | ContentFeature::EXPANSION_None);
+    //     };
     case Options::AllMapsWithCompletionReward:
         return []() { return ContentFeature::REWARD_ZoneCompletionReward; };
     }

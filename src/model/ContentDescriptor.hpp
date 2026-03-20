@@ -3,7 +3,7 @@
 #include <flags/flags.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <type_traits>
-namespace TWC
+namespace TWC::Retired
 {
 enum class ContentFeature : uint16_t
 {
@@ -14,6 +14,7 @@ enum class ContentFeature : uint16_t
     EXPANSION_SecretsOfTheObscure = 1 << 4,
     EXPANSION_JanthirWilds = 1 << 5,
     EXPANSION_VisionsOfEternity = 1 << 6,
+    // When adding a new expansion, also update DescriptorMask::LatestExpansion
     EXPANSION_Optional = 1 << 7,
     CONTINENT_TheMists = 1 << 8,
     CONTINENT_Tyria = 1 << 9,
@@ -24,47 +25,50 @@ enum class ContentFeature : uint16_t
     REWARD_ZoneCompletionReward = 1 << 14
 };
 using ContentDescriptor = flags::flags<ContentFeature>;
-} // namespace TWC
+} // namespace TWC::Retired
 
-template <> struct ::flags::is_flags<TWC::ContentFeature> : std::true_type
+template <> struct ::flags::is_flags<TWC::Retired::ContentFeature> : std::true_type
 {
 };
-template <> struct ::magic_enum::customize::enum_range<TWC::ContentFeature>
+template <> struct ::magic_enum::customize::enum_range<TWC::Retired::ContentFeature>
 {
     static constexpr bool is_flags = true;
 };
 namespace TWC::DescriptorMask
 {
-constexpr auto LatestExpansion = ContentFeature::EXPANSION_VisionsOfEternity;
-constexpr ContentDescriptor ThisOrEarlierExpansion(ContentDescriptor expansion)
+constexpr auto LatestExpansion = Retired::ContentFeature::EXPANSION_VisionsOfEternity;
+constexpr Retired::ContentDescriptor ThisOrEarlierExpansion(Retired::ContentDescriptor expansion)
 {
-    constexpr auto latest = static_cast<std::underlying_type_t<ContentFeature>>(LatestExpansion);
+    constexpr auto latest = static_cast<std::underlying_type_t<Retired::ContentFeature>>(LatestExpansion);
     if (expansion.underlying_value() > latest)
         expansion = LatestExpansion;
-    for (auto bit = latest; bit >= static_cast<std::underlying_type_t<ContentFeature>>(ContentFeature::EXPANSION_None);
+    for (auto bit = latest;
+         bit >= static_cast<std::underlying_type_t<Retired::ContentFeature>>(Retired::ContentFeature::EXPANSION_None);
          bit >>= 1)
         if (bit <= expansion.underlying_value())
-            expansion = expansion | static_cast<ContentFeature>(bit);
+            expansion = expansion | static_cast<Retired::ContentFeature>(bit);
     return expansion;
 }
-consteval ContentDescriptor Expansions()
+consteval Retired::ContentDescriptor Expansions()
 {
-    ContentDescriptor dscr(flags::empty_t{});
-    for (auto bit = static_cast<std::underlying_type_t<ContentFeature>>(LatestExpansion);
-         bit > static_cast<std::underlying_type_t<ContentFeature>>(ContentFeature::EXPANSION_None); bit >>= 1)
-        dscr = dscr | static_cast<ContentFeature>(bit);
+    Retired::ContentDescriptor dscr(flags::empty_t{});
+    for (auto bit = static_cast<std::underlying_type_t<Retired::ContentFeature>>(LatestExpansion);
+         bit > static_cast<std::underlying_type_t<Retired::ContentFeature>>(Retired::ContentFeature::EXPANSION_None);
+         bit >>= 1)
+        dscr = dscr | static_cast<Retired::ContentFeature>(bit);
     return dscr;
 }
-consteval ContentDescriptor Continents()
+consteval Retired::ContentDescriptor Continents()
 {
-    return ContentFeature::CONTINENT_TheMists | ContentFeature::CONTINENT_Tyria;
+    return Retired::ContentFeature::CONTINENT_TheMists | Retired::ContentFeature::CONTINENT_Tyria;
 }
-consteval ContentDescriptor GameModes()
+consteval Retired::ContentDescriptor GameModes()
 {
-    return ContentFeature::MODE_PvE | ContentFeature::MODE_PvP | ContentFeature::MODE_WvW;
+    return Retired::ContentFeature::MODE_PvE | Retired::ContentFeature::MODE_PvP | Retired::ContentFeature::MODE_WvW;
 }
-consteval ContentDescriptor Everything()
+consteval Retired::ContentDescriptor Everything()
 {
-    return static_cast<ContentFeature>((std::numeric_limits<std::underlying_type_t<ContentFeature>>::max)());
+    return static_cast<Retired::ContentFeature>(
+        (std::numeric_limits<std::underlying_type_t<Retired::ContentFeature>>::max)());
 }
 } // namespace TWC::DescriptorMask

@@ -1,10 +1,10 @@
 #include "options/ExclusionsConfigurator.hpp"
-#include "Tools/ThreadService.h"
-#include "model/Content.hpp"
+#include "Content/Type.hpp"
 #include "model/ContentDescriptor.hpp"
+#include "model/Converter.hpp"
 #include "options/Exclusions.hpp"
+#include <Content/Cache.hpp>
 #include <algorithm>
-#include <caching/ContentCache.hpp>
 #include <imgui.h>
 #include <magic_enum/magic_enum.hpp>
 #include <memory>
@@ -26,12 +26,11 @@ void TWC::ExclusionsConfigurator::AddUnlistedExclusions()
     Maps.emplace_back(std::move(custom));
 }
 
-TWC::ExclusionsConfigurator::ExclusionsConfigurator(
-    std::set<ContentInfo<ContentType::RenownHeart>::SerializationType> &tasks, std::set<uint32_t> &pois,
-    std::set<ContentInfo<ContentType::HeroChallenge>::SerializationType> &challanges)
-    : Tasks(tasks), Pois(pois), Challanges(challanges), Converter()
+TWC::ExclusionsConfigurator::ExclusionsConfigurator(std::set<Record<ContentType::RenownHeart>> &tasks,
+                                                    std::set<Record<ContentType::Landmark>> &pois,
+                                                    std::set<Record<ContentType::HeroChallenge>> &challanges)
+    : Tasks(tasks), Pois(pois), Challanges(challanges)
 {
-    G::Thread->AsyncTask(&ContentAnalysis::SkillChallengeIDConverter::Initialize, &Converter);
     AddExplicitExclusions();
     AddUnlistedExclusions();
 }
@@ -85,8 +84,10 @@ void TWC::ExclusionsConfigurator::AddExplicitExclusions()
     Maps.emplace_back(939, "Resealing the Bloody Prince")
         .With<ContentType::Waypoint>(1835, Pois, ExclusionReason::Historical);
 
-    Maps.emplace_back(880, "Toypocalypse - retired")
-        .With<ContentType::Waypoint>(1763, Pois, ExclusionReason::Historical);
+    Maps.emplace_back(880, "Toypocalypse - solo")
+        .With<ContentType::Waypoint>(1763, Pois, ExclusionReason::Seasonal_Wintersday);
+    Maps.emplace_back(1270, "Toypocalypse - party")
+        .With<ContentType::Waypoint>(2849, Pois, ExclusionReason::Historical);
 
     Maps.emplace_back(877, "Snowball Mayhem")
         .With<ContentType::Waypoint>(1760, Pois, ExclusionReason::Seasonal_Wintersday)
@@ -94,9 +95,6 @@ void TWC::ExclusionsConfigurator::AddExplicitExclusions()
 
     Maps.emplace_back(878, "Tixxs Infinirarium")
         .With<ContentType::Waypoint>(1762, Pois, ExclusionReason::Seasonal_Wintersday);
-
-    Maps.emplace_back(1270, "Toypocalypse")
-        .With<ContentType::Waypoint>(2849, Pois, ExclusionReason::Seasonal_Wintersday);
 
     Maps.emplace_back(862, "Reapers Rumble")
         .With<ContentType::Waypoint>(1742, Pois, ExclusionReason::Seasonal_Halloween)
@@ -143,6 +141,13 @@ void TWC::ExclusionsConfigurator::AddExplicitExclusions()
     Maps.emplace_back(1526, "Inner Nayos")
         .With<ContentType::PointOfInterest>(3725, Pois, ExclusionReason::Exclusive_Story)
         .With<ContentType::PointOfInterest>(3726, Pois, ExclusionReason::Exclusive_Story);
+
+    // 183-186, 357-362, 392, 399, 402, 417, 432
+    Maps.emplace_back(0, "Additional")
+        .With<ContentType::RenownHeart>(58, Tasks, ExclusionReason::Historical)
+        .With<ContentType::RenownHeart>(81, Tasks, ExclusionReason::Historical)
+        .With<ContentType::RenownHeart>(82, Tasks, ExclusionReason::Historical)
+        .With<ContentType::RenownHeart>(83, Tasks, ExclusionReason::Historical);
 }
 
 void TWC::ExclusionsConfigurator::Render()
@@ -208,37 +213,13 @@ void TWC::ExclusionsConfigurator::DrawMapDetails()
 
 void TWC::ExclusionsConfigurator::DrawIgnoreButtons()
 {
-    ImGui::SameLine();
-    if (ImGui::Button("Ignore PvP"))
-        ExcludeContent(ContentFeature::MODE_PvP);
-    ImGui::SameLine();
-    if (ImGui::Button("Ignore WvW"))
-        ExcludeContent(ContentFeature::MODE_WvW);
-}
-
-void TWC::ExclusionsConfigurator::ExcludeContent(ContentFeature f)
-{
-    const auto content = G::Cache::Content->GetContent(f);
-    auto it = std::find_if(Maps.begin(), Maps.end(),
-                           [dscr = magic_enum::enum_name(f)](const auto &map) { return map.Description == dscr; });
-
-    auto &exclusion = it != Maps.end() ? *it : Maps.emplace_back(MapExclusion(std::string(magic_enum::enum_name(f))));
-    for (auto task : content.Tasks)
-        if (!exclusion.Contains(task->ID, Tasks))
-            exclusion.WithExcluded<ContentType::RenownHeart>(task->ID, Tasks);
-    for (auto lmk : content.Landmarks)
-        if (!exclusion.Contains(lmk, Pois))
-            exclusion.WithExcluded<ContentType::PointOfInterest>(lmk, Pois);
-    for (auto wpt : content.Waypoints)
-        if (!exclusion.Contains(wpt, Pois))
-            exclusion.WithExcluded<ContentType::Waypoint>(wpt, Pois);
-    for (auto vst : content.Vistas)
-        if (!exclusion.Contains(vst, Pois))
-            exclusion.WithExcluded<ContentType::Vista>(vst, Pois);
-    for (auto hsc : content.Challanges)
-        if (auto id = Converter.ToWebId(*hsc))
-            if (!exclusion.Contains(*id, Challanges))
-                exclusion.WithExcluded<ContentType::HeroChallenge>(*id, Challanges);
+    // ImGui::SameLine();
+    // if (ImGui::Button("Ignore PvP"))
+    //     ExcludeContent(Retired::ContentFeature::MODE_PvP);
+    // ImGui::SameLine();
+    // if (ImGui::Button("Ignore WvW"))
+    //     ExcludeContent(Retired::ContentFeature::MODE_WvW);
+    // ->OldContent
 }
 
 void TWC::ExclusionsConfigurator::DrawMapAddition()
@@ -248,7 +229,7 @@ void TWC::ExclusionsConfigurator::DrawMapAddition()
     if (ImGui::InputScalar("Add Map by ID", ImGuiDataType_U32, &newId, nullptr, nullptr, nullptr,
                            ImGuiInputTextFlags_EnterReturnsTrue))
     {
-        if (const auto &[content, description] = G::Cache::Content->GetMap(newId); !description || !content->Def->Name)
+        if (const auto content = G::Cache::Content->GetMapContent(newId); !content)
         {
             error = "Map#%u couldn't be found or has no discoverable content.";
         }
@@ -259,17 +240,18 @@ void TWC::ExclusionsConfigurator::DrawMapAddition()
         else
         {
             auto &exclusion = Maps.emplace_back(newId);
-            for (auto task : content->Tasks)
-                exclusion.With<ContentType::RenownHeart>(task->ID, Tasks);
-            for (auto lmk : content->Landmarks)
-                exclusion.With<ContentType::PointOfInterest>(lmk, Pois);
+            for (auto task : content->Hearts)
+                exclusion.With<ContentType::RenownHeart>(Converter<ContentType::RenownHeart>::Serialize(task), Tasks);
+            for (auto lmk : content->PointsOfInterest)
+                exclusion.With<ContentType::PointOfInterest>(Converter<ContentType::PointOfInterest>::Serialize(lmk),
+                                                             Pois);
             for (auto wpt : content->Waypoints)
-                exclusion.With<ContentType::Waypoint>(wpt, Pois);
+                exclusion.With<ContentType::Waypoint>(Converter<ContentType::Waypoint>::Serialize(wpt), Pois);
             for (auto vst : content->Vistas)
-                exclusion.With<ContentType::Vista>(vst, Pois);
-            for (auto hsc : content->Challanges)
-                if (auto id = Converter.ToWebId(*hsc))
-                    exclusion.With<ContentType::HeroChallenge>(*id, Challanges);
+                exclusion.With<ContentType::Vista>(Converter<ContentType::Vista>::Serialize(vst), Pois);
+            for (auto identifier : content->Challenges)
+                exclusion.With<ContentType::HeroChallenge>(Converter<ContentType::HeroChallenge>::Serialize(identifier),
+                                                           Challanges);
             newId = 0;
             error = "";
         }
