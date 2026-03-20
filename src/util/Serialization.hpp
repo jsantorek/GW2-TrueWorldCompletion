@@ -1,6 +1,5 @@
 #pragma once
 
-#include "model/CachedCompletion.hpp"
 #include <Logging.hpp>
 #include <Options.hpp>
 #include <nlohmann/json.hpp>
@@ -47,7 +46,7 @@ inline void from_json(const nlohmann::json &j, Options::ProgressBarColours &c)
     c = Options::ProgressBarColours();
     for (const auto &[id, colour] : j.get<std::map<std::string, std::array<float, 4>>>())
     {
-        if (auto feature = magic_enum::enum_cast<ContentFeature>(id))
+        if (auto feature = magic_enum::enum_cast<Retired::ContentFeature>(id))
         {
             if (c.count(feature.value()))
                 c[feature.value()] = colour;
@@ -56,11 +55,13 @@ inline void from_json(const nlohmann::json &j, Options::ProgressBarColours &c)
         }
         else if (id.starts_with("COMBINED"))
         {
-            constexpr auto combined = static_cast<ContentFeature>(DescriptorMask::Everything().underlying_value());
+            constexpr auto combined =
+                static_cast<Retired::ContentFeature>(DescriptorMask::Everything().underlying_value());
             c[combined] = colour;
         }
         else
-            LOG(WARNING, "Could not parse {} as one of {} flags!", id, magic_enum::enum_type_name<ContentFeature>());
+            LOG(WARNING, "Could not parse {} as one of {} flags!", id,
+                magic_enum::enum_type_name<Retired::ContentFeature>());
     }
 }
 inline void to_json(nlohmann::json &j, const Options::ContentExclusion &c)
@@ -106,18 +107,5 @@ void from_json(const nlohmann::json &j, Enum &e)
         }
     }
     LOG(WARNING, "Could not parse {} as {}", j.dump(), magic_enum::enum_type_name<Enum>());
-}
-
-inline void to_json(nlohmann::json &j, const CachedCompletion &c)
-{
-    j["MapId"] = c.MapId;
-    j["Available"] = c.Progress.Available;
-    j["Completed"] = c.Progress.Completed;
-}
-inline void from_json(const nlohmann::json &j, CachedCompletion &c)
-{
-    j.at("MapId").get_to(c.MapId);
-    j.at("Available").get_to(c.Progress.Available);
-    j.at("Completed").get_to(c.Progress.Completed);
 }
 } // namespace TWC

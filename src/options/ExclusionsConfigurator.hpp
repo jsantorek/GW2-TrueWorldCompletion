@@ -1,8 +1,6 @@
 #pragma once
-#include "ContentAnalysis.hpp"
 #include "Exclusions.hpp"
-#include "model/ContentDescriptor.hpp"
-#include <model/Content.hpp>
+#include <Content/Record.hpp>
 #include <set>
 #include <vector>
 namespace TWC
@@ -10,8 +8,8 @@ namespace TWC
 class ExclusionsConfigurator
 {
   public:
-    ExclusionsConfigurator(std::set<ContentInfo<ContentType::RenownHeart>::SerializationType> &, std::set<uint32_t> &,
-                           std::set<ContentInfo<ContentType::HeroChallenge>::SerializationType> &);
+    ExclusionsConfigurator(std::set<Record<ContentType::RenownHeart>> &, std::set<Record<ContentType::Landmark>> &,
+                           std::set<Record<ContentType::HeroChallenge>> &);
     void Render();
     void DrawMultiToggles();
     void DrawMapDetails();
@@ -21,11 +19,9 @@ class ExclusionsConfigurator
   private:
     void AddUnlistedExclusions();
     void AddExplicitExclusions();
-    void ExcludeContent(ContentFeature);
     std::vector<MapExclusion> Maps;
-    std::set<ContentInfo<ContentType::RenownHeart>::SerializationType> &Tasks;
-    std::set<uint32_t> &Pois;
-    std::set<ContentInfo<ContentType::HeroChallenge>::SerializationType> &Challanges;
-    ContentAnalysis::SkillChallengeIDConverter Converter;
+    std::set<Record<ContentType::RenownHeart>> &Tasks;
+    std::set<Record<ContentType::Landmark>> &Pois;
+    std::set<Record<ContentType::HeroChallenge>> &Challanges;
 };
 } // namespace TWC

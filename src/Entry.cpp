@@ -1,10 +1,11 @@
+#include "Completion/Cache.hpp"
 #include "CompletionManager.hpp"
+#include "Content/Cache.hpp"
 #include "Logging.hpp"
 #include "Options.hpp"
-#include "StyleManager.hpp"
+#include "Style/Manager.hpp"
+#include "Text/Localization.hpp"
 #include "Tools/ThreadService.h"
-#include "caching/CompletionCache.hpp"
-#include "caching/ContentCache.hpp"
 #include "hints/HintManager.hpp"
 #include "hooks/HooksManager.hpp"
 #include "patches/PatchManager.hpp"
@@ -16,6 +17,7 @@
 
 void AddonLoad(AddonAPI *aApi);
 void AddonUnload();
+
 namespace G
 {
 AddonAPI *APIDefs = nullptr;
@@ -62,7 +64,7 @@ void AddonLoad(AddonAPI *aApi)
     G::Style = new TWC::StyleManager();
     G::Hints = new TWC::HintManager();
     G::Completion = new TWC::CompletionManager();
-    G::Cache::Content = new TWC::ContentCache();
+    G::Cache::Content = new TWC::ContentCache(int{});
     G::Cache::CharacterInfo = new TWC::CompletionCache();
     try
     {
@@ -75,10 +77,14 @@ void AddonLoad(AddonAPI *aApi)
         return;
     }
     G::Patches = new TWC::PatchManager();
-    TWC::Options::Load()->Apply();
-    G::Hooks->EnableOptionalHooks();
-    LOG_FAST(INFO, "Hooking and patching done");
-    TWC::Options::SetupConfiguration(G::APIDefs);
+    G::Thread->AsyncTask([]() {
+        G::Cache::Content->Initialize();
+        TWC::Options::Load()->Apply();
+        G::Hooks->EnableOptionalHooks();
+        LOG_FAST(INFO, "Hooking and patching done");
+        TWC::Options::SetupConfiguration(G::APIDefs);
+        TWC::TextLocalization::Initialize();
+    });
 
 #ifndef NDEBUG
     Debug::Start();

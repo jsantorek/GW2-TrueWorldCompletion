@@ -3,12 +3,12 @@
 #include "model/ContentDescriptor.hpp"
 #include <vector>
 
-namespace TWC
+namespace TWC::Retired
 {
 
 template <typename T> struct DescribedContent
 {
-    auto operator&(ContentDescriptor mask)
+    auto operator&(Retired::ContentDescriptor mask)
     {
         if (mask == DescriptorMask::Everything())
             return Content;
@@ -31,19 +31,19 @@ template <typename T> struct DescribedContent
         Descriptors.reserve(newSize);
     }
 
-    inline void emplace(T &&cnt, ContentDescriptor &&cls)
+    inline void emplace(T &&cnt, Retired::ContentDescriptor &&cls)
     {
         Content.emplace_back(std::move(cnt));
         Descriptors.emplace_back(std::move(cls));
     }
 
-    inline void emplace(std::pair<T, ContentDescriptor> &&pair)
+    inline void emplace(std::pair<T, Retired::ContentDescriptor> &&pair)
     {
         Content.emplace_back(std::move(pair.first));
         Descriptors.emplace_back(std::move(pair.second));
     }
 
     std::vector<T> Content;
-    std::vector<ContentDescriptor> Descriptors;
+    std::vector<Retired::ContentDescriptor> Descriptors;
 };
-} // namespace TWC
+} // namespace TWC::Retired

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "model/Content.hpp"
+#include "Content/Record.hpp"
 #include <algorithm>
 #include <format>
 #include <magic_enum/magic_enum.hpp>
@@ -40,8 +40,7 @@ struct IContentExclusion
 };
 template <ContentType T> struct ContentExclusion : IContentExclusion
 {
-    using Identifier = ContentInfo<T>::SerializationType;
-    ContentExclusion(Identifier id, std::set<Identifier> &container, ExclusionReason reason = ExclusionReason::Custom)
+    ContentExclusion(Record<T> id, std::set<Record<T>> &container, ExclusionReason reason = ExclusionReason::Custom)
         : ID(id), Container(container), IContentExclusion(std::format("{} #{}", magic_enum::enum_name(T), id), reason)
     {
     }
@@ -61,8 +60,8 @@ template <ContentType T> struct ContentExclusion : IContentExclusion
         return IContentExclusion::Hash(ID, Container);
     }
 
-    Identifier ID;
-    std::set<Identifier> &Container;
+    Record<T> ID;
+    std::set<Record<T>> &Container;
 };
 struct MapExclusion
 {

@@ -1,48 +1,44 @@
 #include "Options.hpp"
+#include "Completion/Cache.hpp"
 #include "CompletionManager.hpp"
-#include "Constants.hpp"
-#include "caching/CompletionCache.hpp"
-#include "caching/ContentCache.hpp"
+#include "Constant/Config.hpp"
 #include "hints/HintManager.hpp"
 #include "options/ColoursConfigurator.hpp"
 #include "options/ExclusionsConfigurator.hpp"
 #include "patches/PatchManager.hpp"
-#include "util/Serialization.hpp"
-#include <ContentAnalysis.hpp>
 #include <Logging.hpp>
-#include <Strings.hpp>
-#include <StyleManager.hpp>
 #include <format>
 #include <fstream>
 #include <imgui.h>
 #include <magic_enum/magic_enum.hpp>
 #include <memory>
+#include <util/Serialization.hpp>
 #include <utility>
 
 void TWC::Options::Apply() const
 {
     G::Hints->SetHintType(MissingMapsHint);
-    G::Cache::Content->Update(Exclusion.Tasks, Exclusion.Landmarks, Exclusion.SkillChallanges);
     G::Cache::CharacterInfo->Update(Exclusion, CharacterSelection);
-    G::Style->Update(Colours, ExpansionAssignment, WorldMap);
+    // G::Style->Update(Colours, ExpansionAssignment, WorldMap, CharacterSelectionDisplay, CharacterSelection);
     G::Completion->Update(WorldMap, CharacterSelection, ExpansionAssignment);
     G::Patches->Update(ShowProgressBarInAllDiscoveryAlerts, ShowCompletionInfoInAllLoadingScreens);
 }
 
 void TWC::Options::Save() const
 {
-    auto filepath = std::filesystem::path(G::APIDefs->Paths.GetAddonDirectory(ADDON_NAME)) / ConfigFilename;
+    auto filepath = std::filesystem::path(G::APIDefs->Paths.GetAddonDirectory(ADDON_NAME)) / ConfigConstants::Filename;
     try
     {
         if (!std::filesystem::exists(filepath.parent_path()))
             std::filesystem::create_directories(filepath.parent_path());
         auto json = nlohmann::json();
-        json["Version"] = ConfigVersion;
+        json["Version"] = ConfigConstants::Version;
         json["Colours"] = Colours;
         json["Exclusions"] = Exclusion;
         json["ExpansionAssignment"] = ExpansionAssignment;
         json["ShowProgressBarInAllDiscoveryAlerts"] = ShowProgressBarInAllDiscoveryAlerts;
         json["ShowCompletionInfoInAllLoadingScreens"] = ShowCompletionInfoInAllLoadingScreens;
+        json["CharacterSelectionDisplay"] = CharacterSelectionDisplay;
         json["WorldMap"] = WorldMap;
         if (WorldMap != CharacterSelection)
             json["CharacterSelection"] = CharacterSelection;
@@ -57,7 +53,7 @@ void TWC::Options::Save() const
 std::unique_ptr<TWC::Options> TWC::Options::Load()
 {
     auto options = std::make_unique<TWC::Options>();
-    auto filepath = std::filesystem::path(G::APIDefs->Paths.GetAddonDirectory(ADDON_NAME)) / ConfigFilename;
+    auto filepath = std::filesystem::path(G::APIDefs->Paths.GetAddonDirectory(ADDON_NAME)) / ConfigConstants::Filename;
     if (!std::filesystem::exists(filepath))
     {
         LOG(INFO, "File not found, fresh one with default values will be created");
@@ -68,7 +64,7 @@ std::unique_ptr<TWC::Options> TWC::Options::Load()
     {
         auto json = nlohmann::json::object();
         json = nlohmann::json::parse(std::ifstream(filepath));
-        if (auto ver = json.value("Version", 0); ver != ConfigVersion)
+        if (auto ver = json.value("Version", 0); ver != ConfigConstants::Version)
         {
             LOG(WARNING, "File contains incompatible data, loading skipped");
         }
@@ -82,6 +78,7 @@ std::unique_ptr<TWC::Options> TWC::Options::Load()
             json.at("Colours").get_to(options->Colours);
             json.at("ShowProgressBarInAllDiscoveryAlerts").get_to(options->ShowProgressBarInAllDiscoveryAlerts);
             json.at("ShowCompletionInfoInAllLoadingScreens").get_to(options->ShowCompletionInfoInAllLoadingScreens);
+            json.at("CharacterSelectionDisplay").get_to(options->CharacterSelectionDisplay);
         }
     }
     catch (const std::exception &e)
@@ -161,7 +158,7 @@ void TWC::Options::RenderConfiguration()
             }
             ImGui::SameLine();
             if (ImGui::Button("Cache character completion"))
-                G::Thread->AsyncTask(&CompletionCache::Refresh, G::Cache::CharacterInfo);
+                G::Cache::CharacterInfo->Refresh();
             if (ImGui::IsItemHovered())
             {
                 ImGui::BeginTooltip();
@@ -208,6 +205,17 @@ void TWC::Options::RenderConfiguration()
                 }
                 ImGui::EndCombo();
             }
+            ImGui::Text("Character selection completion display style:");
+            ImGui::CheckboxFlags("Uses colour", (int *)&Configurable->CharacterSelectionDisplay,
+                                 CharacterSelectionStyle::UseColourTags);
+            ImGui::CheckboxFlags("Shows exact count", (int *)&Configurable->CharacterSelectionDisplay,
+                                 CharacterSelectionStyle::ShowExactCounts);
+            ImGui::CheckboxFlags("Shows unmodded completion when cache is missing",
+                                 (int *)&Configurable->CharacterSelectionDisplay,
+                                 CharacterSelectionStyle::HideWhenCacheMissing);
+            ImGui::CheckboxFlags("Shows unmodded completion in addition to cached value",
+                                 (int *)&Configurable->CharacterSelectionDisplay,
+                                 CharacterSelectionStyle::ShowUnmoddedCompletion);
             if (ImGui::BeginCombo("after hint is requested",
                                   magic_enum::enum_name(Configurable->MissingMapsHint).data()))
             {

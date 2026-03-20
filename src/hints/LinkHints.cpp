@@ -1,4 +1,4 @@
-#include "Constants.hpp"
+#include "Constant/Other.hpp"
 #include "Hint.hpp"
 #include "Logging.hpp"
 #include <format>
@@ -7,7 +7,7 @@
 void TWC::LinkAPIHint::Activate()
 {
     std::stringstream oss;
-    auto count = TWC::HttpsMaxMapIdCount;
+    auto count = TWC::OtherConstants::HttpsMaxMapIdCount;
     oss << "https://api.guildwars2.com/v2/maps?ids=";
     for (const auto map : incomplete)
     {

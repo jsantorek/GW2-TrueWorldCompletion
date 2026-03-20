@@ -8,11 +8,11 @@ namespace TWC
 class ColourConfigurator
 {
   public:
-    ColourConfigurator(std::unordered_map<ContentFeature, std::array<float, 4>> &);
+    ColourConfigurator(std::unordered_map<Retired::ContentFeature, std::array<float, 4>> &);
     void Render();
 
   private:
-    std::unordered_map<ContentFeature, std::array<float, 4>> &Colours;
-    const std::vector<std::tuple<const char *, ContentFeature>> NamedDescriptors;
+    std::unordered_map<Retired::ContentFeature, std::array<float, 4>> &Colours;
+    const std::vector<std::tuple<const char *, Retired::ContentFeature>> NamedDescriptors;
 };
 } // namespace TWC

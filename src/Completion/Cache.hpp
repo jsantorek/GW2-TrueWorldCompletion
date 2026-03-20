@@ -1,7 +1,8 @@
 #pragma once
 
+#include "Completion/Store.hpp"
+#include "Completion/Value.hpp"
 #include "Options.hpp"
-#include "model/CachedCompletion.hpp"
 #include <mutex>
 #include <optional>
 #include <unordered_map>
@@ -13,16 +14,18 @@ class CompletionCache
   public:
     CompletionCache();
     ~CompletionCache();
-    std::optional<Completion> GetCompletion(const std::string &characterId, uint32_t mapId);
+    std::optional<LocalizedCompletionStore<TWC::CompletionValue>> GetCompletion(std::wstring_view characterName);
     void Refresh();
     void Update(Options::ContentExclusion excl, Options::CompletionMode wrld);
 
   private:
     void Load();
     void Persist();
-    std::unordered_map<std::string, CachedCompletion> completion_;
-    std::size_t hash_;
-    std::mutex mutex_;
+
+    std::unordered_map<std::string, LocalizedCompletionStore<uint32_t>> Completed;
+    CompletionStore<uint32_t> Available;
+    std::size_t Hash;
+    std::mutex Mutex;
 };
 } // namespace TWC
 

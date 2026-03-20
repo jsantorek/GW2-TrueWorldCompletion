@@ -1,7 +1,6 @@
 #include "HintManager.hpp"
 #include "Hint.hpp"
 #include "Logging.hpp"
-#include "Tools/ThreadService.h"
 #include <memory>
 #include <mutex>
 
@@ -50,10 +49,7 @@ void TWC::HintManager::RequestHint()
         return;
     if (stale_)
     {
-        if (TWC::ThreadService::IsThisGameThread())
-            HintManager::RefreshHint();
-        else
-            G::Thread->SyncTask(&HintManager::RefreshHint, this).get();
+        HintManager::RefreshHint();
         stale_ = false;
     }
     hint_->Request();
