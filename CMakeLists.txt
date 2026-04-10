@@ -32,7 +32,6 @@ find_package(rcgg-nexus-api)
 find_package(imgui)
 find_package(nlohmann_json)
 find_package(magic_enum)
-find_package(enumflags)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/src-re/GW2RE.cmake)
 file(GLOB_RECURSE SRCs ${CMAKE_CURRENT_SOURCE_DIR}/src/*.[hc]pp)
@@ -47,7 +46,6 @@ target_link_libraries(${PROJECT_NAME}
     imgui::imgui
     nlohmann_json::nlohmann_json
     magic_enum::magic_enum
-    EnumFlags::EnumFlags
     ${RE_LIBs}
 )
 string(REGEX REPLACE "[^A-Z]" "" PROJECT_ACRONYM "${PROJECT_NAME}")
@@ -59,6 +57,7 @@ target_compile_definitions(${PROJECT_NAME}
         ADDON_VERSION_REVISION=$<IF:$<BOOL:${PROJECT_VERSION_TWEAK}>,${PROJECT_VERSION_TWEAK},0>
         ADDON_NAME="${PROJECT_NAME}"
         ADDON_ACRONYM="${PROJECT_ACRONYM}"
+        _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 )
 target_include_directories(${PROJECT_NAME}
     PRIVATE

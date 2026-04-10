@@ -3,7 +3,7 @@
 
 namespace TWC::ConstantWaypointRecord
 {
-// https://wiki.guildwars2.com/wiki/Kasha's%20Tomb%20Waypoint
+// https://wiki.guildwars2.com/wiki/Kasha%27s%20Tomb%20Waypoint
 constexpr auto KashasTombWaypoint = Record<ContentType::Waypoint>(942);
 
 // https://wiki.guildwars2.com/wiki/The_Lovers%27_Crypt
@@ -27,4 +27,19 @@ constexpr auto MoogoolooWaypoint = Record<ContentType::Waypoint>(14);
 
 // https://wiki.guildwars2.com/index.php?title=Greyhoof_Meadows&oldid=589817
 constexpr auto MeadowsWaypoint = Record<ContentType::Waypoint>(5);
+
+// https://wiki.guildwars2.com/wiki/Victory_or_Death
+constexpr auto PactCampWaypoint = Record<ContentType::Waypoint>(859);
+constexpr auto TheHumbleWaypoint = Record<ContentType::Waypoint>(1631);
+constexpr auto TheGloryOfTyriasWaypoint = Record<ContentType::Waypoint>(1632);
+
+// https://wiki.guildwars2.com/wiki/Molten_Furnace
+constexpr auto CavernEntranceWaypoint = Record<ContentType::Waypoint>(1799);
+constexpr auto OverlookWaypoint = Record<ContentType::Waypoint>(1800);
+constexpr auto OreProcessingWaypoint = Record<ContentType::Waypoint>(1801);
+
+// https://wiki.guildwars2.com/wiki/Molten_Furnace
+constexpr auto RoughneckCrookWaypoint = Record<ContentType::Waypoint>(1806);
+constexpr auto KleptotronicAdvancedDesignsWaypoint = Record<ContentType::Waypoint>(1807);
+constexpr auto ScoundrelsHovelWaypoint = Record<ContentType::Waypoint>(1808);
 } // namespace TWC::ConstantWaypointRecord

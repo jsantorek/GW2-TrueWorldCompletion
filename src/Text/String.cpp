@@ -1,10 +1,12 @@
 #include "Logging.hpp"
+#include "Model/Continent.hpp"
+#include "Model/Expansion.hpp"
 #include "Text/Localization.hpp"
 #include <Nexus.h>
 #include <codecvt>
 #include <locale>
 #include <magic_enum/magic_enum.hpp>
-#include <model/ContentDescriptor.hpp>
+#include <string>
 
 namespace G
 {
@@ -45,11 +47,11 @@ void TWC::TextLocalization::Initialize()
     id = GetIdentifier(Expansion::VisionsOfEternity);
     G::APIDefs->Localization.Set(id.c_str(), "en", "Visions of Eternity Completion");
 
-    // id = GetIdentifier(Inclusion::Continent_TheMists);
-    // G::APIDefs->Localization.Set(id.c_str(), "en", "The Mists Completion");
+    id = GetIdentifier(Continent::Mists);
+    G::APIDefs->Localization.Set(id.c_str(), "en", "The Mists Completion");
 
-    // id = GetIdentifier(Inclusion::Continent_Tyria);
-    // G::APIDefs->Localization.Set(id.c_str(), "en", "Tyria Completion");
+    id = GetIdentifier(Continent::Tyria);
+    G::APIDefs->Localization.Set(id.c_str(), "en", "Tyria Completion");
 
     // id = GetIdentifier(Inclusion::Completion_WorldMap);
     // G::APIDefs->Localization.Set(id.c_str(), "en", "Custom World Completion");

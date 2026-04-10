@@ -8,6 +8,7 @@ enum class ContentType
     Waypoint,
     RenownHeart,
     HeroChallenge,
-    Landmark
+    Landmark,
+    Map,
 };
 } // namespace TWC

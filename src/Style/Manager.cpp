@@ -1,109 +1,255 @@
 #include "Style/Manager.hpp"
 #include "Completion/Byte.hpp"
 #include "Completion/Cache.hpp"
+#include "Completion/Store.hpp"
 #include "Completion/Value.hpp"
+#include "Configurable/ColourPalette.hpp"
+#include "Configurable/ExpansionAssignment.hpp"
+#include "Configurable/TextFormat.hpp"
+#include "Configurable/WorldCompletion.hpp"
+#include "Format/CharacterProgressText.hpp"
+#include "Format/CharacterProgressTooltip.hpp"
+#include "Format/WorldMapProgress.hpp"
 #include "Game/Types.h"
-#include "Map/Features.hpp"
+#include "Map/Descriptor.hpp"
+#include "Map/Utils.hpp"
+#include "Model/Continent.hpp"
 #include "Model/Expansion.hpp"
-#include <codecvt>
+#include "Style/Definition.hpp"
+#include <Logging.hpp>
+#include <cstdint>
 #include <format>
 #include <magic_enum/magic_enum.hpp>
+#include <mutex>
+#include <optional>
+#include <string_view>
+#include <tuple>
+#include <utility>
+
+namespace
+{
+auto constexpr UnknownCharacterValue = "--";
+auto constexpr String_LegendaryWorldCompletion = "Legendary World Completion";
+auto constexpr String_CompletionRewards = "Completion Rewards";
+auto constexpr String_GiftOfExploration = "Gift of Exploration";
+auto constexpr String_ContinentName = "TODO: Continent";
+auto constexpr String_ExpansionName = "TODO: Expansion";
+auto constexpr String_DataMissing = "data unavailable";
+auto constexpr String_UnknownWorld = "Unknown World Completion";
+
+} // namespace
+
+void TWC::StyleManager::Update(const ConfigurableColourPalette &colours, ConfigurableExpansionAssignment assignment,
+                               ConfigurableWorldCompletion completion, const ConfigurableTextFormat &format)
+{
+    const auto lock = std::lock_guard(Mutex);
+    Assignment = assignment;
+    Completion = completion;
+    CharacterProgressText = format.CharacterProgressText;
+    CharacterProgressTooltip = format.CharacterProgressTooltip;
+    WorldMapProgress = format.WorldMapProgress;
+
+    LegendaryColour = colours.LegendaryCompletion();
+    RewardColour = colours.RewardCompletion();
+    ContinentColours[Continent::None] = UnknownColour;
+    ContinentColours[Continent::Mists] = colours.ContinentCompletion<Continent::Mists>();
+    ContinentColours[Continent::Tyria] = colours.ContinentCompletion<Continent::Tyria>();
+    ExpansionColours[Expansion::None] = colours.ExpansionCompletion<Expansion::None>();
+    ExpansionColours[Expansion::HeartOfThorns] = colours.ExpansionCompletion<Expansion::HeartOfThorns>();
+    ExpansionColours[Expansion::PathOfFire] = colours.ExpansionCompletion<Expansion::PathOfFire>();
+    ExpansionColours[Expansion::EndOfDragons] = colours.ExpansionCompletion<Expansion::EndOfDragons>();
+    ExpansionColours[Expansion::SecretsOfTheObscure] = colours.ExpansionCompletion<Expansion::SecretsOfTheObscure>();
+    ExpansionColours[Expansion::JanthirWilds] = colours.ExpansionCompletion<Expansion::JanthirWilds>();
+    ExpansionColours[Expansion::VisionsOfEternity] = colours.ExpansionCompletion<Expansion::VisionsOfEternity>();
+}
 
 TWC::StyleDefinition::MapProgress TWC::StyleManager::GetMapProgress(TWC::MapDescriptor dscr) const
 {
-    if (dscr.Features.count(MapFeatures::Accessible_Festival))
+    auto style = StyleDefinition::MapProgress{};
+    switch (Assignment)
     {
-        return StyleDefinition::MapProgress{.Colour = GetExpansionColour(TWC::Expansion::None)};
+    default:
+        LOG(WARNING, "Unsupported {}::{} received, falling back to default {}",
+            magic_enum::enum_type_name<ConfigurableExpansionAssignment>(), magic_enum::enum_name(Assignment),
+            magic_enum::enum_name(ConfigurableExpansionAssignment::AccessabilityBased));
+    case ConfigurableExpansionAssignment::AccessabilityBased:
+        style.Colour = ExpansionColours[dscr.GetExpansion<ConfigurableExpansionAssignment::AccessabilityBased>()];
+        break;
+    case ConfigurableExpansionAssignment::ChronologyBased:
+        style.Colour = ExpansionColours[dscr.GetExpansion<ConfigurableExpansionAssignment::ChronologyBased>()];
+        break;
     }
-    else if (false && // TODO expansion assignment based on accessibility
-             dscr.Features.count(MapFeatures::Accessible_FreeAccount))
-    {
-        return StyleDefinition::MapProgress{.Colour = GetExpansionColour(TWC::Expansion::None)};
-    }
-    else
-    {
-        return StyleDefinition::MapProgress{.Colour = GetExpansionColour(dscr.Expansion)};
-    }
-    // {Retired::ContentFeature::CONTINENT_TheMists, rgb(132, 129, 126)}, {},
+    return style;
 }
 
 TWC::StyleDefinition::WorldProgress TWC::StyleManager::GetWorldProgress(CompletionValue value) const
 {
-    auto [colour, name] = GetWorldColourAndName(0);
+    auto [colour, name] = GetCurrentWorldColourAndName();
+    auto text = std::string{};
+    switch (WorldMapProgress)
+    {
+    case FormatWorldMapProgress::ShowValues:
+        text = std::format("{}/{}", value.Completed, value.Available);
+        break;
+    case FormatWorldMapProgress::ShowPercentage:
+        text = std::format("{:.1f}%", value.Percent());
+        break;
+    }
     return TWC::StyleDefinition::WorldProgress{
-        .Text = std::format(L"{}/{}", value.Completed, value.Available),
+        .Text = std::move(text),
         .Label = std::move(name),
         .Colour = std::move(colour),
     };
 }
 
-TWC::StyleDefinition::CharacterProgress TWC::StyleManager::GetCharacterProgress(std::wstring_view characterName,
+GW2RE::Colour4 TWC::StyleManager::GetWorldColour(uint32_t id1, uint32_t id2) const
+{
+    switch (Completion)
+    {
+    default:
+        LOG(WARNING, "Unsupported {}::{} received", magic_enum::enum_type_name<ConfigurableWorldCompletion>(),
+            magic_enum::enum_name(Completion));
+        break;
+    case ConfigurableWorldCompletion::AllMapsCollectively:
+        return LegendaryColour;
+    case ConfigurableWorldCompletion::AllMapsWithCompletionReward:
+        return RewardColour;
+    case ConfigurableWorldCompletion::CurrentContinentMapsOnly: {
+        if (auto continent = MapUtils::MatchContinent(id1, id2))
+        {
+            return ContinentColours[continent.value()];
+        }
+        break;
+    }
+    case ConfigurableWorldCompletion::CurrentExpansionMapsOnly:
+    case ConfigurableWorldCompletion::CurrentOrEarlierExpansionMaps: {
+        if (auto expansion = MapUtils::MatchExpansions(Assignment, id1, id2))
+        {
+            return ExpansionColours[expansion.value()];
+        }
+        break;
+    }
+    }
+    return UnknownColour;
+}
+TWC::StyleDefinition::CharacterProgress TWC::StyleManager::GetCharacterProgress(std::string_view characterName,
                                                                                 uint32_t lastMapId,
                                                                                 CompletionByte origin) const
 {
-    if (auto value = G::Cache::CharacterInfo->GetCompletion(characterName))
+    auto style = StyleDefinition::CharacterProgress{};
+    const auto value = G::Cache::Completion->GetCompletion(characterName);
+    if (value)
     {
-        if (lastMapId != value->MapId)
-            ;
-        return StyleDefinition::CharacterProgress{.Text = std::format(L"<c=#997f25>[{}/{}]</c> {}/255",
-                                                                      value->World.Completed, value->World.Available,
-                                                                      origin.Completed),
-                                                  .Tooltip = std::format(L"True World Completion <br> <br>{}{}<br> ",
-                                                                         SerializeCompletionProgress(value.value()),
-                                                                         SerializeGiftOfExplorationProgress(origin))};
+        auto colour = GetWorldColour(lastMapId, value->MapId);
+        style.Text = std::format("<c=#{:02X}{:02X}{:02X}>", colour.R, colour.G, colour.B);
+        if (CharacterProgressText.test(FormatCharacterProgressTextFlags::ShowWorldValues))
+        {
+            style.Text.append(std::format("[{}/{}]", value->World.Completed, value->World.Available));
+        }
+        if (CharacterProgressText.test(FormatCharacterProgressTextFlags::ShowWorldPercentage))
+        {
+            style.Text.append(std::format(" {:.1f}%", value->World.Percent()));
+        }
+        style.Text.append("</c>");
+        if (CharacterProgressTooltip.IsCustomized())
+            style.Tooltip =
+                std::format("True World Completion<br> <br>{}<br>{}:", SerializeCompletionProgress(value.value()),
+                            String_GiftOfExploration);
     }
-    return StyleDefinition::CharacterProgress{
-        .Text = std::format(L"-- {}/255", origin.Completed),
-        .Tooltip = std::format(L"True World Completion<br> <br>{} data unavailable!<br>{}<br> ", characterName,
-                               SerializeGiftOfExplorationProgress(origin)),
-    };
-}
-
-GW2RE::Colour4 TWC::StyleManager::GetExpansionColour(TWC::Expansion expansion) const
-{
-    switch (expansion)
+    else
     {
-    case TWC::Expansion::None:
-        return GW2RE::Colour4::rgb(203, 59, 60);
-    case TWC::Expansion::HeartOfThorns:
-        return GW2RE::Colour4::rgb(58, 113, 19);
-    case TWC::Expansion::PathOfFire:
-        return GW2RE::Colour4::rgb(80, 12, 66);
-    case TWC::Expansion::EndOfDragons:
-        return GW2RE::Colour4::rgb(24, 153, 166);
-    case TWC::Expansion::SecretsOfTheObscure:
-        return GW2RE::Colour4::rgb(197, 158, 79);
-    case TWC::Expansion::JanthirWilds:
-        return GW2RE::Colour4::rgb(34, 63, 117);
-    case TWC::Expansion::VisionsOfEternity:
-        return GW2RE::Colour4::rgb(216, 114, 0);
+        style.Text = UnknownCharacterValue;
+        if (CharacterProgressTooltip.IsCustomized())
+            style.Tooltip = std::format("True World Completion<br> <br>{} {}!<br>{}:", characterName,
+                                        String_DataMissing, String_GiftOfExploration);
     }
-    return GW2RE::Colour4::rgb(0, 0, 0);
+    if (style.Tooltip)
+    {
+        if (CharacterProgressTooltip.test(FormatCharacterProgressTooltipFlags::ShowValues))
+        {
+            style.Tooltip->append(std::format(" [{}/255]", origin.Completed));
+        }
+        if (CharacterProgressTooltip.test(FormatCharacterProgressTooltipFlags::ShowPercentages))
+        {
+            style.Tooltip->append(std::format(" {:.1f}%", origin.Percent()));
+        }
+    }
+
+    if (CharacterProgressText.test(FormatCharacterProgressTextFlags::ShowGiftOfBattleValues))
+    {
+        style.Text.append(std::format(" [{}/255]", origin.Completed));
+    }
+    if (CharacterProgressText.test(FormatCharacterProgressTextFlags::ShowGiftOfBattlePercentage))
+    {
+        style.Text.append(std::format(" {:.1f}%", origin.Percent()));
+    }
+    return style;
 }
 
-std::wstring TWC::StyleManager::SerializeGiftOfExplorationProgress(CompletionByte completion) const
+GW2RE::Colour4 TWC::StyleManager::GetExpansionColour(MapDescriptor dscr) const
 {
-    return std::format(L"Gift of Exploration: [{}/255] {:.1f}%", completion.Completed, 100.f * float(completion));
+    switch (Assignment)
+    {
+    default:
+        LOG(WARNING, "Unsupported {}::{} received", magic_enum::enum_type_name<ConfigurableExpansionAssignment>(),
+            magic_enum::enum_name(Assignment));
+        break;
+    case ConfigurableExpansionAssignment::AccessabilityBased:
+        return ExpansionColours[dscr.GetExpansion<ConfigurableExpansionAssignment::AccessabilityBased>()];
+    case ConfigurableExpansionAssignment::ChronologyBased:
+        return ExpansionColours[dscr.GetExpansion<ConfigurableExpansionAssignment::ChronologyBased>()];
+    }
+    return UnknownColour;
 }
 
-std::wstring TWC::StyleManager::SerializeCompletionProgress(const LocalizedCompletionStore<CompletionValue> &store) const
+std::string TWC::StyleManager::SerializeCompletionProgress(const LocalizedCompletionStore<CompletionValue> &store) const
 {
-    auto str = std::wstring{};
-    auto appendLine = [&](GW2RE::Colour4 colour, CompletionValue value, std::wstring name) {
-        str.append(std::format(L"<c=#{:02X}{:02X}{:02X}>{}</c>: [{}/{}] {:.1f}%<br>", colour.R, colour.G, colour.B,
-                               name, value.Completed, value.Available, 100.f * float(value)));
+    auto str = std::string{};
+    auto appendLine = [&](GW2RE::Colour4 colour, CompletionValue value, std::string_view name) {
+        if (!value.Completed)
+            return;
+        str.append(std::format("<c=#{:02X}{:02X}{:02X}>{}</c>:", colour.R, colour.G, colour.B, name));
+        if (CharacterProgressTooltip.test(FormatCharacterProgressTooltipFlags::ShowValues))
+        {
+            str.append(std::format(" [{}/{}]", value.Completed, value.Available));
+        }
+        if (CharacterProgressTooltip.test(FormatCharacterProgressTooltipFlags::ShowPercentages))
+        {
+            str.append(std::format(" {:.1f}%", value.Percent()));
+        }
+        str.append("<br>");
     };
-    appendLine(GW2RE::Colour4::rgb(153, 127, 37), store.World, L"Legendary World Completion");
-    appendLine(GW2RE::Colour4::rgb(49, 139, 188), store.Reward, L"Completion Rewards");
+    appendLine(LegendaryColour, store.Legendary, String_LegendaryWorldCompletion);
+    appendLine(RewardColour, store.Reward, String_CompletionRewards);
     for (const auto &[value, name] : magic_enum::enum_entries<Expansion>())
     {
-        appendLine(GetExpansionColour(value), store.Expansions[static_cast<size_t>(value)],
-                   std::wstring(name.begin(), name.end()));
+        appendLine(ExpansionColours[value], store.Expansions[value], name);
     }
     return str;
 }
 
-std::tuple<GW2RE::Colour4, std::wstring> TWC::StyleManager::GetWorldColourAndName(uint32_t) const
+std::tuple<GW2RE::Colour4, std::string> TWC::StyleManager::GetCurrentWorldColourAndName() const
 {
-    return {GW2RE::Colour4::rgb(153, 127, 37), L"Legendary World Completion"};
+    switch (Completion)
+    {
+    case ConfigurableWorldCompletion::AllMapsCollectively:
+        return {LegendaryColour, String_LegendaryWorldCompletion};
+    case ConfigurableWorldCompletion::AllMapsWithCompletionReward:
+        return {RewardColour, String_CompletionRewards};
+    case ConfigurableWorldCompletion::CurrentContinentMapsOnly: {
+        if (auto dscr = MapDescriptor::FromCurrentMap())
+        {
+            return {ContinentColours[dscr->GetContinent()], String_ContinentName};
+        }
+        break;
+    }
+    case ConfigurableWorldCompletion::CurrentOrEarlierExpansionMaps:
+    case ConfigurableWorldCompletion::CurrentExpansionMapsOnly:
+        if (auto dscr = MapDescriptor::FromCurrentMap())
+        {
+            return {GetExpansionColour(dscr.value()), String_ExpansionName};
+        }
+        break;
+    }
+    return {UnknownColour, String_UnknownWorld};
 }

@@ -72,8 +72,19 @@ consteval auto cropped_funcsig(const std::string_view &funcsig)
         return funcsig;
     auto start = funcsig.rfind(prefix, end - prefix.size());
     if (start == std::string::npos || start + prefix.size() >= end)
-        return funcsig;
-    start += prefix.size();
+    {
+        constexpr auto anonynmous_prefix = std::string_view{"(anonymous namespace)::"};
+        start = funcsig.rfind(anonynmous_prefix, end - anonynmous_prefix.size());
+        if (start == std::string::npos || start + anonynmous_prefix.size() >= end)
+        {
+            return funcsig;
+        }
+        start += anonynmous_prefix.size();
+    }
+    else
+    {
+        start += prefix.size();
+    }
     return funcsig.substr(start, end - start);
 }
 } // namespace log
