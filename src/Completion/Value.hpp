@@ -23,18 +23,20 @@ struct CompletionValue
         return os;
     }
 
+    [[nodiscard]] float Percent() const
+    {
+        if (Completed == Available)
+            return 100.f;
+        float percent = static_cast<float>(*this) * 100.0f;
+        constexpr auto RoundingFactor = 10.f;
+        return std::floor(percent * RoundingFactor) / RoundingFactor;
+    }
+
     operator float() const
     {
         if (Completed >= Available)
             return 1.0f;
         return static_cast<float>(Completed) / static_cast<float>(Available);
-    }
-
-    operator uint8_t() const
-    {
-        if (Completed >= Available)
-            return 255;
-        return static_cast<uint8_t>(254.0f * static_cast<float>(*this));
     }
 };
 

@@ -7,7 +7,7 @@ namespace TWC
 {
 struct ContentDescriptor
 {
-    flags::flags<ContentFeatures> Features = flags::flags<TWC::ContentFeatures>(flags::empty_t{});
+    magic_enum::containers::bitset<ContentFeatures> Features{magic_enum::containers::detail::raw_access_t{}};
     MapDescriptor Map = {};
 };
 static_assert(sizeof(ContentDescriptor) <= sizeof(int));

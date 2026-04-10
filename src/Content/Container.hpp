@@ -8,13 +8,36 @@ namespace TWC
 template <template <ContentType> typename Collection> struct ContentContainer
 {
     ContentContainer() = default;
-    Collection<ContentType::RenownHeart> Hearts = {};
-    Collection<ContentType::HeroChallenge> Challenges = {};
-    Collection<ContentType::PointOfInterest> PointsOfInterest = {};
-    Collection<ContentType::Waypoint> Waypoints = {};
-    Collection<ContentType::Vista> Vistas = {};
 
     template <ContentType T> inline const auto &GetContents() const
+    {
+        if constexpr (T == ContentType::RenownHeart)
+        {
+            return Hearts;
+        }
+        else if constexpr (T == ContentType::HeroChallenge)
+        {
+            return Challenges;
+        }
+        else if constexpr (T == ContentType::Waypoint)
+        {
+            return Waypoints;
+        }
+        else if constexpr (T == ContentType::Vista)
+        {
+            return Vistas;
+        }
+        else if constexpr (T == ContentType::PointOfInterest)
+        {
+            return PointsOfInterest;
+        }
+        else
+        {
+            static_assert(T != T, "GetContents not implemented for this ContentType");
+        }
+    }
+
+    template <ContentType T> inline auto &GetContents()
     {
         if constexpr (T == ContentType::RenownHeart)
         {
@@ -50,6 +73,13 @@ template <template <ContentType> typename Collection> struct ContentContainer
     template <ContentType T> inline auto Count() const
     {
         return GetContents<T>().size();
+    }
+
+    inline auto Empty() const
+    {
+        return GetContents<ContentType::Vista>().empty() && GetContents<ContentType::PointOfInterest>().empty() &&
+               GetContents<ContentType::Waypoint>().empty() && GetContents<ContentType::RenownHeart>().empty() &&
+               GetContents<ContentType::HeroChallenge>().empty();
     }
 
     template <ContentType T, typename UnaryFunc, typename UnaryPred>
@@ -116,5 +146,11 @@ template <template <ContentType> typename Collection> struct ContentContainer
         }
         return init;
     }
+
+    Collection<ContentType::RenownHeart> Hearts = {};
+    Collection<ContentType::HeroChallenge> Challenges = {};
+    Collection<ContentType::PointOfInterest> PointsOfInterest = {};
+    Collection<ContentType::Waypoint> Waypoints = {};
+    Collection<ContentType::Vista> Vistas = {};
 };
 } // namespace TWC

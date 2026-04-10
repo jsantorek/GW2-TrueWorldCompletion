@@ -1,23 +1,31 @@
 #include "Completion/Cache.hpp"
-#include "CompletionManager.hpp"
 #include "Content/Cache.hpp"
+#include "Content/Type.hpp"
+#include "DataAccessor.hpp"
+#include "Filter/Factory.hpp"
+#include "Hint/Manager.hpp"
 #include "Logging.hpp"
+#include "Model/Converter.hpp"
 #include "Options.hpp"
 #include "Style/Manager.hpp"
 #include "Text/Localization.hpp"
-#include "Tools/ThreadService.h"
-#include "hints/HintManager.hpp"
 #include "hooks/HooksManager.hpp"
 #include "patches/PatchManager.hpp"
 #include <Nexus.h>
+#include <cstddef>
+#include <format>
+#include <future>
 #include <imgui.h>
+#include <stdexcept>
 #ifndef NDEBUG
 #include "Debug.hpp"
 #endif
 
+void AddonLoadAsync(AddonAPI *aApi);
 void AddonLoad(AddonAPI *aApi);
 void AddonUnload();
 
+static std::future<void> *Initialization = nullptr;
 namespace G
 {
 AddonAPI *APIDefs = nullptr;
@@ -25,12 +33,11 @@ TWC::HooksManager *Hooks = nullptr;
 TWC::PatchManager *Patches = nullptr;
 TWC::HintManager *Hints = nullptr;
 TWC::StyleManager *Style = nullptr;
-TWC::CompletionManager *Completion = nullptr;
-std::shared_ptr<TWC::ThreadService> Thread = nullptr;
+TWC::FilterFactory *Filters = nullptr;
 namespace Cache
 {
 TWC::ContentCache *Content = nullptr;
-TWC::CompletionCache *CharacterInfo = nullptr;
+TWC::CompletionCache *Completion = nullptr;
 } // namespace Cache
 } // namespace G
 
@@ -45,12 +52,22 @@ AddonDefinition *GetAddonDef()
         .Version = AddonVersion{ADDON_VERSION_MAJOR, ADDON_VERSION_MINOR, ADDON_VERSION_PATCH, ADDON_VERSION_REVISION},
         .Author = "Vonsh.1427",
         .Description = "Seamless display within game map, includes all zones of all expansions and living worlds.",
-        .Load = AddonLoad,
+        .Load = AddonLoadAsync,
         .Unload = AddonUnload,
-        .Flags = EAddonFlags_IsVolatile,
+        .Flags =
+#ifdef _DEBUG
+            EAddonFlags_None,
+#else
+            EAddonFlags_IsVolatile,
+#endif
         .Provider = EUpdateProvider_GitHub,
         .UpdateLink = "https://github.com/jsantorek/GW2-" ADDON_NAME};
     return &def;
+}
+
+void AddonLoadAsync(AddonAPI *aApi)
+{
+    Initialization = new std::future<void>(std::async(std::launch::async, AddonLoad, aApi));
 }
 
 void AddonLoad(AddonAPI *aApi)
@@ -60,31 +77,29 @@ void AddonLoad(AddonAPI *aApi)
     ImGui::SetAllocatorFunctions(reinterpret_cast<void *(*)(size_t, void *)>(G::APIDefs->ImguiMalloc),
                                  reinterpret_cast<void (*)(void *, void *)>(G::APIDefs->ImguiFree));
 
-    G::Hooks = new TWC::HooksManager();
-    G::Style = new TWC::StyleManager();
-    G::Hints = new TWC::HintManager();
-    G::Completion = new TWC::CompletionManager();
-    G::Cache::Content = new TWC::ContentCache(int{});
-    G::Cache::CharacterInfo = new TWC::CompletionCache();
     try
     {
-        G::Thread = TWC::ThreadService::Build();
+        G::Hooks = new TWC::HooksManager();
         G::Hooks->EnableCriticalHooks();
+        G::Style = new TWC::StyleManager();
+        G::Hints = new TWC::HintManager();
+        G::Filters = new TWC::FilterFactory();
+        const auto data = TWC::DataAccessor{};
+        TWC::Converter<TWC::ContentType::RenownHeart>::Populate(data);
+        G::Cache::Content = new TWC::ContentCache(data);
+        G::Cache::Completion = new TWC::CompletionCache();
+        G::Patches = new TWC::PatchManager(data);
+        G::Hooks->EnableOptionalHooks();
+        LOG_FAST(INFO, "Hooking and patching done");
+        TWC::Options::SetupConfiguration(G::APIDefs);
+        TWC::TextLocalization::Initialize();
+        TWC::Options::Load()->Apply();
     }
     catch (const std::runtime_error &e)
     {
         LOG_FAST(CRITICAL, std::format("Critical section failure(s):\n\t{}\nAddon disabled!", e.what()).c_str());
         return;
     }
-    G::Patches = new TWC::PatchManager();
-    G::Thread->AsyncTask([]() {
-        G::Cache::Content->Initialize();
-        TWC::Options::Load()->Apply();
-        G::Hooks->EnableOptionalHooks();
-        LOG_FAST(INFO, "Hooking and patching done");
-        TWC::Options::SetupConfiguration(G::APIDefs);
-        TWC::TextLocalization::Initialize();
-    });
 
 #ifndef NDEBUG
     Debug::Start();
@@ -93,15 +108,17 @@ void AddonLoad(AddonAPI *aApi)
 
 void AddonUnload()
 {
+    Initialization->wait();
+    delete Initialization;
+    TWC::Converter<TWC::ContentType::RenownHeart>::Clear();
     TWC::Options::CleanupConfiguration(G::APIDefs);
     delete G::Style;
-    delete G::Cache::CharacterInfo;
+    delete G::Cache::Completion;
     delete G::Hooks;
     delete G::Patches;
     delete G::Hints;
-    delete G::Completion;
+    delete G::Filters;
     delete G::Cache::Content;
-    G::Thread.reset();
 #ifndef NDEBUG
     Debug::Stop();
 #endif

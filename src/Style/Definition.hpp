@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Game/Types.h"
+#include <optional>
 #include <string>
 namespace TWC::StyleDefinition
 {
@@ -10,13 +11,13 @@ struct MapProgress
 };
 struct WorldProgress
 {
-    std::wstring Text;
-    std::wstring Label;
+    std::string Text;
+    std::string Label;
     GW2RE::Colour4 Colour;
 };
 struct CharacterProgress
 {
-    std::wstring Text;
-    std::wstring Tooltip;
+    std::string Text;
+    std::optional<std::string> Tooltip;
 };
 } // namespace TWC::StyleDefinition

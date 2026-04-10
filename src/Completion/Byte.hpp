@@ -13,5 +13,9 @@ struct CompletionByte
     {
         return static_cast<float>(Completed) / static_cast<float>(Available);
     }
+    inline auto Percent() const
+    {
+        return 100.f * static_cast<float>(Completed) / static_cast<float>(Available);
+    }
 };
 } // namespace TWC

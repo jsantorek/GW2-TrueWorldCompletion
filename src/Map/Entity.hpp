@@ -1,17 +1,18 @@
 #pragma once
 
 #include "Content/Container.hpp"
-#include "Map/Descriptor.hpp"
+#include "Map/Definition.hpp"
 
 namespace TWC
 {
 template <template <ContentType> typename Collection>
-struct MapEntity : public ContentContainer<Collection>, public MapDescriptor
+struct MapEntity : public ContentContainer<Collection>, public MapDefinition
 {
-    GW2RE::MapDef_t *Definition = nullptr;
+    MapEntity(GW2RE::MapDef_t *def) : ContentContainer<Collection>(), MapDefinition(def)
+    {
+    }
 
-    MapEntity(GW2RE::MapDef_t *def)
-        : ContentContainer<Collection>(), MapDescriptor(MapDescriptor::From(def)), Definition(def)
+    MapEntity(const MapDefinition &other) : ContentContainer<Collection>(), MapDefinition(other)
     {
     }
 

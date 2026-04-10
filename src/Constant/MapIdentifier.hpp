@@ -53,12 +53,6 @@ constexpr auto RaidOnTheCapricorn = 741;
 // https://wiki.guildwars2.com/wiki/Heart_of_the_Mists
 constexpr auto HeartOfTheMists = 350;
 
-// https://wiki.guildwars2.com/wiki/Molten_Facility
-constexpr auto MoltenFacility = 901;
-
-// https://wiki.guildwars2.com/wiki/Aetherblade_Retreat
-constexpr auto AetherbladeRetreat = 915;
-
 // https://wiki.guildwars2.com/wiki/The_Tower_of_Nightmares
 constexpr auto TheTowerOfNightmaresPublic = 943;
 constexpr auto TheTowerOfNightmaresPrivate = 1477;
@@ -74,6 +68,7 @@ constexpr auto VictoryOrDeath = 111;
 
 // https://wiki.guildwars2.com/wiki/Ascalonian_Catacombs_(story)
 constexpr auto AscalonianCatacombsStory = 33;
+
 // https://wiki.guildwars2.com/wiki/Ascalonian_Catacombs_(explorable)
 constexpr auto AscalonianCatacombsExplorable = 36;
 
@@ -92,8 +87,25 @@ constexpr auto Dragonfall = 1317;
 // https://wiki.guildwars2.com/wiki/The_Ruined_City_of_Arah
 constexpr auto TheRuinedCityOfArah = 112;
 
+// https://wiki.guildwars2.com/wiki/Crystal_Desert
+constexpr auto CrystalOasis = 1210;
+
+// https://wiki.guildwars2.com/wiki/Sparking_the_Flame
+constexpr auto SparkingTheFlame = 1217;
+
+// https://wiki.guildwars2.com/wiki/Discovering_Scarlet%27s_Breakthrough
+constexpr auto DiscoveringScarletsBreakthrough = 997;
+
+// https://wiki.guildwars2.com/wiki/Into_the_Labyrinth
+constexpr auto IntoTheLabyrinth = 1021;
+
+// https://wiki.guildwars2.com/wiki/Enemy_of_My_Enemy
+constexpr auto EnemyOfMyEnemy = 1247;
+constexpr auto EnemyOfMyEnemyTheBeastmarshal = 1219;
+constexpr auto EnemyOfMyEnemyTheTroopmarshal = 1255;
+
 // https://wiki.guildwars2.com/wiki/Toypocalypse
-constexpr auto ToypocalypseParty = 1763;
+constexpr auto ToypocalypseParty = 880;
 constexpr auto ToypocalypsePublic = 1270;
 constexpr auto SnowballMayhem = 877;
 constexpr auto TixxsInfinirarium = 878;
@@ -106,6 +118,15 @@ constexpr auto DragonBallArena = 911;
 constexpr auto AspectArena = 918;
 constexpr auto TheCrownPavilion = 929;
 
+// https://wiki.guildwars2.com/wiki/Mistlock_Sanctuary
+constexpr auto MistlockSanctuary = 1206;
+
+// https://wiki.guildwars2.com/wiki/Armistice_Bastion
+constexpr auto ArmisticeBastion = 1315;
+
+// https://wiki.guildwars2.com/wiki/Thousand_Seas_Pavilion
+constexpr auto ThousandSeasPavilion = 1465;
+
 // https://wiki.guildwars2.com/wiki/Kessex_Hills
 constexpr auto KessexHills = 23;
 
@@ -116,8 +137,16 @@ constexpr auto SalvationPass = 1149;
 constexpr auto StrongholdOfTheFaithful = 1156;
 
 // https://wiki.guildwars2.com/wiki/Mount_Balrior_(zone)
-// Mt. Belrior: 1566, {1571, 1572, 1562, 1564}
+constexpr auto MountBalriorLabel = 1566;
+constexpr auto MountBalriorConvergencePrivate = 1562;
+constexpr auto MountBalriorRaid = 1564;
+constexpr auto MountBalriorConvergencePublic = 1571;
+constexpr auto MountBalriorStoryInstance = 1572;
+
+// https://wiki.guildwars2.com/wiki/Bad_Ice
+constexpr auto Falooaloo = 850;
 
 constexpr auto VerdantBrinkClone = 1042;
-constexpr auto BastionOfThePenitentClone = 1068;
+
+constexpr auto BastionOfThePenitentLabel = 1186;
 } // namespace TWC::ConstantMapIdentifier

@@ -9,7 +9,7 @@ struct FilterUserExclusions : public FilterInterface
 {
     [[nodiscard]] bool operator()(ContentDescriptor dscr) const override
     {
-        return dscr.Features.count(ContentFeatures::UserExcluded) == 0;
+        return dscr.Features.test(ContentFeatures::UserExcluded) == 0;
     }
 };
 } // namespace TWC
