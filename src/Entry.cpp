@@ -29,15 +29,15 @@ static std::future<void> *Initialization = nullptr;
 namespace G
 {
 AddonAPI *APIDefs = nullptr;
-TWC::HooksManager *Hooks = nullptr;
-TWC::PatchManager *Patches = nullptr;
-TWC::HintManager *Hints = nullptr;
-TWC::StyleManager *Style = nullptr;
-TWC::FilterFactory *Filters = nullptr;
+std::unique_ptr<TWC::HooksManager> Hooks = nullptr;
+std::unique_ptr<TWC::PatchManager> Patches = nullptr;
+std::unique_ptr<TWC::HintManager> Hints = nullptr;
+std::unique_ptr<TWC::StyleManager> Style = nullptr;
+std::unique_ptr<TWC::FilterFactory> Filters = nullptr;
 namespace Cache
 {
-TWC::ContentCache *Content = nullptr;
-TWC::CompletionCache *Completion = nullptr;
+std::unique_ptr<TWC::ContentCache> Content = nullptr;
+std::unique_ptr<TWC::CompletionCache> Completion = nullptr;
 } // namespace Cache
 } // namespace G
 
@@ -79,27 +79,39 @@ void AddonLoad(AddonAPI *aApi)
 
     try
     {
-        G::Hooks = new TWC::HooksManager();
+        G::Hooks = std::make_unique<TWC::HooksManager>();
         G::Hooks->EnableCriticalHooks();
-        G::Style = new TWC::StyleManager();
-        G::Hints = new TWC::HintManager();
-        G::Filters = new TWC::FilterFactory();
-        const auto data = TWC::DataAccessor{};
-        TWC::Converter<TWC::ContentType::RenownHeart>::Populate(data);
-        G::Cache::Content = new TWC::ContentCache(data);
-        G::Cache::Completion = new TWC::CompletionCache();
-        G::Patches = new TWC::PatchManager(data);
-        G::Hooks->EnableOptionalHooks();
-        LOG_FAST(INFO, "Hooking and patching done");
-        TWC::Options::SetupConfiguration(G::APIDefs);
-        TWC::TextLocalization::Initialize();
-        TWC::Options::Load()->Apply();
     }
     catch (const std::runtime_error &e)
     {
         LOG_FAST(CRITICAL, std::format("Critical section failure(s):\n\t{}\nAddon disabled!", e.what()).c_str());
+        G::Hooks.reset();
+    }
+    G::Style = std::make_unique<TWC::StyleManager>();
+    G::Hints = std::make_unique<TWC::HintManager>();
+    G::Filters = std::make_unique<TWC::FilterFactory>();
+    try
+    {
+        const auto data = TWC::DataAccessor{};
+        TWC::Converter<TWC::ContentType::RenownHeart>::Populate(data);
+        G::Cache::Content = std::make_unique<TWC::ContentCache>(data);
+        G::Cache::Completion = std::make_unique<TWC::CompletionCache>();
+        G::Patches = std::make_unique<TWC::PatchManager>(data);
+    }
+    catch (const std::runtime_error &e)
+    {
+        LOG_FAST(CRITICAL, std::format("Data reliant section failure(s):\n\t{}\nAddon disabled!", e.what()).c_str());
+        G::Cache::Content.reset();
+        G::Cache::Completion.reset();
+        G::Patches.reset();
+        G::Hooks.reset();
         return;
     }
+    G::Hooks->EnableOptionalHooks();
+    LOG_FAST(INFO, "Hooking and patching done");
+    TWC::Options::SetupConfiguration(G::APIDefs);
+    TWC::TextLocalization::Initialize();
+    TWC::Options::Load()->Apply();
 
 #ifndef NDEBUG
     Debug::Start();
@@ -112,13 +124,13 @@ void AddonUnload()
     delete Initialization;
     TWC::Converter<TWC::ContentType::RenownHeart>::Clear();
     TWC::Options::CleanupConfiguration(G::APIDefs);
-    delete G::Style;
-    delete G::Cache::Completion;
-    delete G::Hooks;
-    delete G::Patches;
-    delete G::Hints;
-    delete G::Filters;
-    delete G::Cache::Content;
+    G::Style.reset();
+    G::Cache::Completion.reset();
+    G::Hooks.reset();
+    G::Patches.reset();
+    G::Hints.reset();
+    G::Filters.reset();
+    G::Cache::Content.reset();
 #ifndef NDEBUG
     Debug::Stop();
 #endif

@@ -49,5 +49,5 @@ template <> void ContentCache::InitializeContent<ContentType::Landmark>();
 
 namespace G::Cache
 {
-extern TWC::ContentCache *Content;
+extern std::unique_ptr<TWC::ContentCache> Content;
 };

@@ -33,5 +33,5 @@ class CompletionCache
 
 namespace G::Cache
 {
-extern TWC::CompletionCache *Completion;
+extern std::unique_ptr<TWC::CompletionCache> Completion;
 } // namespace G::Cache

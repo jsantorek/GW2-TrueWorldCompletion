@@ -25,5 +25,5 @@ struct FilterFactory
 } // namespace TWC
 namespace G
 {
-extern TWC::FilterFactory *Filters;
+extern std::unique_ptr<TWC::FilterFactory> Filters;
 };

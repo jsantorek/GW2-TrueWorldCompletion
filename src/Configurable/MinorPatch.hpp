@@ -9,6 +9,7 @@ enum class ConfigurableMinorPatch
     DiscoveryAlerts,
     LoadingScreens,
     SpiritValeMapLabelName,
+    WorldMapProgress,
 };
 struct ConfigurableMinorPatches : magic_enum::containers::set<ConfigurableMinorPatch>
 {
@@ -17,6 +18,7 @@ struct ConfigurableMinorPatches : magic_enum::containers::set<ConfigurableMinorP
         ConfigurableMinorPatch::DiscoveryAlerts,
         ConfigurableMinorPatch::LoadingScreens,
         ConfigurableMinorPatch::SpiritValeMapLabelName,
+        ConfigurableMinorPatch::WorldMapProgress,
     };
     void Render();
     static magic_enum::containers::array<ConfigurableMinorPatch, std::string_view> MakePatchNames();

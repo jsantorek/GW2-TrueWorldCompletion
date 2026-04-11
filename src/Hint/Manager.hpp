@@ -24,5 +24,5 @@ class HintManager
 
 namespace G
 {
-extern TWC::HintManager *Hints;
+extern std::unique_ptr<TWC::HintManager> Hints;
 }

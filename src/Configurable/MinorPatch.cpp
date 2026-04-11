@@ -29,6 +29,8 @@ magic_enum::containers::array<TWC::ConfigurableMinorPatch, std::string_view> TWC
     names[ConfigurableMinorPatch::LoadingScreens] =
         "Content discovered alerts on all maps display completion progress bar";
     names[ConfigurableMinorPatch::SpiritValeMapLabelName] =
-        "Prgoress widget displayed after hovering over Spirit Vale's map label uses correct name";
+        "Progress widget displayed after hovering over Spirit Vale's map label uses correct name";
+    names[ConfigurableMinorPatch::WorldMapProgress] =
+        "World completion widget displayed after opening World Map on any map";
     return names;
 }

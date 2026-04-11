@@ -95,7 +95,7 @@ consteval auto cropped_funcsig(const std::string_view &funcsig)
 #ifdef NDEBUG
 #define LOG_DEBUG()
 #define LOG(level, ...)                                                                                                \
-    if constexpr (ELogLevel_##level < log::DebugLogThreshold)                                                          \
+    if constexpr (ELogLevel_##level <= log::DebugLogThreshold)                                                         \
     G::APIDefs->Log(ELogLevel_##level, ADDON_NAME,                                                                     \
                     std::format("{} {}", log::cropped_funcsig(__PRETTY_FUNCTION__), std::format(__VA_ARGS__)).c_str())
 #define LOG_FAST(level, msg)                                                                                           \

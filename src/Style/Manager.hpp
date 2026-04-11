@@ -49,5 +49,5 @@ class StyleManager
 } // namespace TWC
 namespace G
 {
-extern TWC::StyleManager *Style;
+extern std::unique_ptr<TWC::StyleManager> Style;
 }

@@ -36,7 +36,9 @@ void TWC::Options::Apply() const
     G::Cache::Content->Update(ContentExclusions);
     G::Cache::Completion->Update();
     G::Patches->Update(MinorPatches.contains(ConfigurableMinorPatch::DiscoveryAlerts),
-                       MinorPatches.contains(ConfigurableMinorPatch::LoadingScreens));
+                       MinorPatches.contains(ConfigurableMinorPatch::LoadingScreens),
+                       MinorPatches.contains(ConfigurableMinorPatch::SpiritValeMapLabelName),
+                       MinorPatches.contains(ConfigurableMinorPatch::WorldMapProgress));
 }
 
 void TWC::Options::Save() const
