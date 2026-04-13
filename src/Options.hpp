@@ -8,7 +8,6 @@
 #include "Configurable/TextFormat.hpp"
 #include "Configurable/WorldCompletion.hpp"
 #include <Nexus.h>
-#include <filesystem>
 #include <magic_enum/magic_enum_containers.hpp>
 #include <memory>
 

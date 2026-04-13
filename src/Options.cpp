@@ -44,6 +44,7 @@ void TWC::Options::Apply() const
         MinorPatches.contains(ConfigurableMinorPatch::SpiritValeMapLabelName));
     G::Patches->Update<ConfigurableMinorPatch::WorldMapProgress>(
         MinorPatches.contains(ConfigurableMinorPatch::WorldMapProgress));
+    G::Cache::Completion->Update();
 }
 
 void TWC::Options::Save() const
@@ -106,7 +107,7 @@ std::unique_ptr<TWC::Options> TWC::Options::Load()
     return options;
 }
 
-std::unique_ptr<TWC::Options> Configurable = nullptr;
+static std::unique_ptr<TWC::Options> Configurable = nullptr;
 
 void TWC::Options::SetupConfiguration(const AddonAPI::RendererVT &renderer, const AddonAPI::PathsVT &paths)
 {

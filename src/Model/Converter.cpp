@@ -75,7 +75,7 @@ TWC::Identifier<TWC::ContentType::HeroChallenge> TWC::Converter<TWC::ContentType
 {
     using BitType = decltype(std::declval<Identifier<ContentType::HeroChallenge>>().Bit);
     unsigned long exp = 0, bit = 0;
-    size_t pos = data.find('-');
+    const size_t pos = data.find('-');
     if (pos == std::string::npos)
         return {};
     auto res = std::from_chars(data.data(), data.data() + pos, exp);

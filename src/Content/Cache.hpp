@@ -41,7 +41,7 @@ struct ContentCache : public ContentContainer<DescribedContentCollection>
 
   private:
     std::vector<MapEntity<DescribedContentReferences>> Maps = {};
-    size_t Hash;
+    size_t Hash{};
     template <ContentType T> void InitializeContent();
 };
 template <> void ContentCache::InitializeContent<ContentType::Landmark>();

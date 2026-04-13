@@ -17,7 +17,7 @@ class HintManager
 
   private:
     std::unique_ptr<HintInterface> Hint;
-    bool Stale;
+    bool Stale{};
     std::mutex Mutex;
     std::chrono::time_point<std::chrono::system_clock> LastActivation;
 };

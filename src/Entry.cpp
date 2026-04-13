@@ -22,15 +22,15 @@
 #include "Debug.hpp"
 #endif
 
-void AddonLoadAsync(AddonAPI *aApi);
-void AddonLoad(AddonAPI *aApi);
-void AddonUnload();
+static void AddonLoadAsync(AddonAPI *aApi);
+static void AddonLoad(AddonAPI *aApi);
+static void AddonUnload();
 
 static std::future<void> *Initialization = nullptr;
 namespace G
 {
 LOGGER_LOG2 Log = nullptr;
-std::unique_ptr<TWC::HooksManager> Hooks = nullptr;
+static std::unique_ptr<TWC::HooksManager> Hooks = nullptr;
 std::unique_ptr<TWC::PatchManager> Patches = nullptr;
 std::unique_ptr<TWC::HintManager> Hints = nullptr;
 std::unique_ptr<TWC::StyleManager> Style = nullptr;
