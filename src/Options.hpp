@@ -8,6 +8,7 @@
 #include "Configurable/TextFormat.hpp"
 #include "Configurable/WorldCompletion.hpp"
 #include <Nexus.h>
+#include <filesystem>
 #include <magic_enum/magic_enum_containers.hpp>
 #include <memory>
 
@@ -18,10 +19,11 @@ class Options
   public:
     void Apply() const;
     void Save() const;
+    void Reload();
     static std::unique_ptr<Options> Load();
 
-    static void SetupConfiguration(AddonAPI *api);
-    static void CleanupConfiguration(AddonAPI *api);
+    static void SetupConfiguration(const AddonAPI::RendererVT &renderer, const AddonAPI::PathsVT &paths);
+    static void CleanupConfiguration();
 
   private:
     static void RenderConfiguration();

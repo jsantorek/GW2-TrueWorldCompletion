@@ -1,5 +1,6 @@
 build
 .conan
+clang-tidy.log
 .addons
 .venv
 .vscode

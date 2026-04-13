@@ -1,6 +1,7 @@
 #pragma once
 #include "Configurable/IncompleteMapHint.hpp"
 #include <Hint/Interface.hpp>
+#include <Nexus.h>
 #include <chrono>
 #include <mutex>
 
@@ -9,7 +10,7 @@ namespace TWC
 class HintManager
 {
   public:
-    HintManager();
+    HintManager(const AddonAPI::UIVT &ui);
     void MarkStale();
     void SetHintType(ConfigurableIncompleteMapHint);
     void RequestHint();

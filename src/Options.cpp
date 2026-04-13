@@ -7,8 +7,8 @@
 #include "Content/Cache.hpp"
 #include "Filter/Factory.hpp"
 #include "Hint/Manager.hpp"
+#include "Patch/Manager.hpp"
 #include "Style/Manager.hpp"
-#include "patches/PatchManager.hpp"
 #include <Logging.hpp>
 #include <Nexus.h>
 #include <exception>
@@ -27,6 +27,8 @@ namespace
 {
 constexpr auto Version = 2;
 constexpr auto Filename = "config.json";
+GUI_REMRENDER Deregister = nullptr;
+PATHS_GETADDONDIR GetAddonDirectory = nullptr;
 } // namespace
 void TWC::Options::Apply() const
 {
@@ -34,16 +36,19 @@ void TWC::Options::Apply() const
     G::Filters->Update(ExpansionAssignment, WorldCompletion);
     G::Style->Update(ColourPalette, ExpansionAssignment, WorldCompletion, TextFormat);
     G::Cache::Content->Update(ContentExclusions);
-    G::Cache::Completion->Update();
-    G::Patches->Update(MinorPatches.contains(ConfigurableMinorPatch::DiscoveryAlerts),
-                       MinorPatches.contains(ConfigurableMinorPatch::LoadingScreens),
-                       MinorPatches.contains(ConfigurableMinorPatch::SpiritValeMapLabelName),
-                       MinorPatches.contains(ConfigurableMinorPatch::WorldMapProgress));
+    G::Patches->Update<ConfigurableMinorPatch::DiscoveryAlerts>(
+        MinorPatches.contains(ConfigurableMinorPatch::DiscoveryAlerts));
+    G::Patches->Update<ConfigurableMinorPatch::LoadingScreens>(
+        MinorPatches.contains(ConfigurableMinorPatch::LoadingScreens));
+    G::Patches->Update<ConfigurableMinorPatch::SpiritValeMapLabelName>(
+        MinorPatches.contains(ConfigurableMinorPatch::SpiritValeMapLabelName));
+    G::Patches->Update<ConfigurableMinorPatch::WorldMapProgress>(
+        MinorPatches.contains(ConfigurableMinorPatch::WorldMapProgress));
 }
 
 void TWC::Options::Save() const
 {
-    auto filepath = std::filesystem::path(G::APIDefs->Paths.GetAddonDirectory(ADDON_NAME)) / Filename;
+    auto filepath = std::filesystem::path(GetAddonDirectory(ADDON_NAME)) / Filename;
     try
     {
         if (!std::filesystem::exists(filepath.parent_path()))
@@ -64,10 +69,11 @@ void TWC::Options::Save() const
         LOG(WARNING, "Unexpected error when persisting options:\n\t{}", e.what());
     }
 }
+
 std::unique_ptr<TWC::Options> TWC::Options::Load()
 {
+    auto filepath = std::filesystem::path(GetAddonDirectory(ADDON_NAME)) / Filename;
     auto options = std::make_unique<TWC::Options>();
-    auto filepath = std::filesystem::path(G::APIDefs->Paths.GetAddonDirectory(ADDON_NAME)) / Filename;
     if (!std::filesystem::exists(filepath))
     {
         LOG(INFO, "File not found, fresh one with default values will be created");
@@ -102,14 +108,16 @@ std::unique_ptr<TWC::Options> TWC::Options::Load()
 
 std::unique_ptr<TWC::Options> Configurable = nullptr;
 
-void TWC::Options::SetupConfiguration(AddonAPI *api)
+void TWC::Options::SetupConfiguration(const AddonAPI::RendererVT &renderer, const AddonAPI::PathsVT &paths)
 {
-    api->Renderer.Register(ERenderType_OptionsRender, RenderConfiguration);
+    renderer.Register(ERenderType_OptionsRender, RenderConfiguration);
+    Deregister = renderer.Deregister;
+    GetAddonDirectory = paths.GetAddonDirectory;
 }
 
-void TWC::Options::CleanupConfiguration(AddonAPI *api)
+void TWC::Options::CleanupConfiguration()
 {
-    api->Renderer.Deregister(RenderConfiguration);
+    Deregister(RenderConfiguration);
     if (Configurable)
     {
         Configurable->Save();

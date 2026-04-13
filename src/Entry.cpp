@@ -7,15 +7,16 @@
 #include "Logging.hpp"
 #include "Model/Converter.hpp"
 #include "Options.hpp"
+#include "Patch/Manager.hpp"
 #include "Style/Manager.hpp"
 #include "Text/Localization.hpp"
 #include "hooks/HooksManager.hpp"
-#include "patches/PatchManager.hpp"
 #include <Nexus.h>
 #include <cstddef>
 #include <format>
 #include <future>
 #include <imgui.h>
+#include <memory>
 #include <stdexcept>
 #ifndef NDEBUG
 #include "Debug.hpp"
@@ -28,7 +29,7 @@ void AddonUnload();
 static std::future<void> *Initialization = nullptr;
 namespace G
 {
-AddonAPI *APIDefs = nullptr;
+LOGGER_LOG2 Log = nullptr;
 std::unique_ptr<TWC::HooksManager> Hooks = nullptr;
 std::unique_ptr<TWC::PatchManager> Patches = nullptr;
 std::unique_ptr<TWC::HintManager> Hints = nullptr;
@@ -72,30 +73,28 @@ void AddonLoadAsync(AddonAPI *aApi)
 
 void AddonLoad(AddonAPI *aApi)
 {
-    G::APIDefs = aApi;
-    ImGui::SetCurrentContext(reinterpret_cast<ImGuiContext *>(G::APIDefs->ImguiContext));
-    ImGui::SetAllocatorFunctions(reinterpret_cast<void *(*)(size_t, void *)>(G::APIDefs->ImguiMalloc),
-                                 reinterpret_cast<void (*)(void *, void *)>(G::APIDefs->ImguiFree));
-
+    G::Log = aApi->Log;
+    ImGui::SetCurrentContext(reinterpret_cast<ImGuiContext *>(aApi->ImguiContext));
+    ImGui::SetAllocatorFunctions(reinterpret_cast<void *(*)(size_t, void *)>(aApi->ImguiMalloc),
+                                 reinterpret_cast<void (*)(void *, void *)>(aApi->ImguiFree));
     try
     {
-        G::Hooks = std::make_unique<TWC::HooksManager>();
-        G::Hooks->EnableCriticalHooks();
+        G::Hooks = std::make_unique<TWC::HooksManager>(aApi->MinHook);
     }
     catch (const std::runtime_error &e)
     {
         LOG_FAST(CRITICAL, std::format("Critical section failure(s):\n\t{}\nAddon disabled!", e.what()).c_str());
-        G::Hooks.reset();
+        return;
     }
     G::Style = std::make_unique<TWC::StyleManager>();
-    G::Hints = std::make_unique<TWC::HintManager>();
+    G::Hints = std::make_unique<TWC::HintManager>(aApi->UI);
     G::Filters = std::make_unique<TWC::FilterFactory>();
     try
     {
         const auto data = TWC::DataAccessor{};
         TWC::Converter<TWC::ContentType::RenownHeart>::Populate(data);
         G::Cache::Content = std::make_unique<TWC::ContentCache>(data);
-        G::Cache::Completion = std::make_unique<TWC::CompletionCache>();
+        G::Cache::Completion = std::make_unique<TWC::CompletionCache>(aApi->Paths);
         G::Patches = std::make_unique<TWC::PatchManager>(data);
     }
     catch (const std::runtime_error &e)
@@ -109,12 +108,12 @@ void AddonLoad(AddonAPI *aApi)
     }
     G::Hooks->EnableOptionalHooks();
     LOG_FAST(INFO, "Hooking and patching done");
-    TWC::Options::SetupConfiguration(G::APIDefs);
-    TWC::TextLocalization::Initialize();
+    TWC::Options::SetupConfiguration(aApi->Renderer, aApi->Paths);
+    TWC::TextLocalization::Initialize(aApi->Localization);
     TWC::Options::Load()->Apply();
 
 #ifndef NDEBUG
-    Debug::Start();
+    Debug::Start(aApi);
 #endif
 }
 
@@ -123,7 +122,7 @@ void AddonUnload()
     Initialization->wait();
     delete Initialization;
     TWC::Converter<TWC::ContentType::RenownHeart>::Clear();
-    TWC::Options::CleanupConfiguration(G::APIDefs);
+    TWC::Options::CleanupConfiguration();
     G::Style.reset();
     G::Cache::Completion.reset();
     G::Hooks.reset();

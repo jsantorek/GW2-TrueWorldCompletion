@@ -9,6 +9,7 @@
 #include "Hint/WikiLink.hpp"
 #include "Logging.hpp"
 #include "Map/Definition.hpp"
+#include <Nexus.h>
 #include <chrono>
 #include <memory>
 #include <mutex>
@@ -18,10 +19,13 @@ namespace
 {
 constexpr auto MinimumActivationDelay =
     std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(2));
-}
 
-TWC::HintManager::HintManager() : LastActivation(std::chrono::system_clock::now())
+ALERTS_NOTIFY SendAlert = nullptr;
+} // namespace
+
+TWC::HintManager::HintManager(const AddonAPI::UIVT &ui) : LastActivation(std::chrono::system_clock::now())
 {
+    SendAlert = ui.SendAlert;
 }
 
 void TWC::HintManager::MarkStale()
@@ -81,7 +85,7 @@ void TWC::HintManager::RequestHint()
         }
         if (incomplete.empty())
         {
-            G::APIDefs->UI.SendAlert("This character seems to have discovered everything"); /* TODO */
+            SendAlert("This character seems to have discovered everything"); /* TODO */
         }
         LOG(INFO, "Identified {} incomplete maps", incomplete.size());
         Hint->SetIncompleteMaps(incomplete);

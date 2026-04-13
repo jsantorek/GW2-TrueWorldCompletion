@@ -5,7 +5,7 @@
 
 namespace G
 {
-extern AddonAPI *APIDefs;
+extern LOGGER_LOG2 Log;
 }
 
 namespace log
@@ -20,7 +20,7 @@ template <ELogLevel level> struct StreamLogger
 
     ~StreamLogger()
     {
-        G::APIDefs->Log(level, ADDON_NAME, oss.str().c_str());
+        G::Log(level, ADDON_NAME, oss.str().c_str());
     }
 
     template <typename T> StreamLogger &operator<<(const T &t)
@@ -38,22 +38,22 @@ template <ELogLevel L> struct ScopeLogger
     {
         if constexpr (sizeof...(Args) == 0)
         {
-            G::APIDefs->Log(L, ADDON_NAME, std::format("{} Started", str_).c_str());
+            G::Log(L, ADDON_NAME, std::format("{} Started", str_).c_str());
         }
         else if constexpr (sizeof...(Args) == 1)
         {
-            G::APIDefs->Log(L, ADDON_NAME, std::format("{} Started: {}", str_, std::forward<Args>(args)...).c_str());
+            G::Log(L, ADDON_NAME, std::format("{} Started: {}", str_, std::forward<Args>(args)...).c_str());
         }
         else
         {
-            G::APIDefs->Log(L, ADDON_NAME,
-                            std::format("{} Started: {}", str_, std::format(std::forward<Args>(args)...)).c_str());
+            G::Log(L, ADDON_NAME,
+                   std::format("{} Started: {}", str_, std::format(std::forward<Args>(args)...)).c_str());
         }
     }
 
     constexpr ~ScopeLogger()
     {
-        G::APIDefs->Log(L, ADDON_NAME, std::format("{} Finished", str).c_str());
+        G::Log(L, ADDON_NAME, std::format("{} Finished", str).c_str());
     }
 
     template <typename... Args> [[nodiscard]] static constexpr auto make(const std::string_view &str_, Args &&...args)
@@ -96,17 +96,17 @@ consteval auto cropped_funcsig(const std::string_view &funcsig)
 #define LOG_DEBUG()
 #define LOG(level, ...)                                                                                                \
     if constexpr (ELogLevel_##level <= log::DebugLogThreshold)                                                         \
-    G::APIDefs->Log(ELogLevel_##level, ADDON_NAME,                                                                     \
-                    std::format("{} {}", log::cropped_funcsig(__PRETTY_FUNCTION__), std::format(__VA_ARGS__)).c_str())
+    G::Log(ELogLevel_##level, ADDON_NAME,                                                                              \
+           std::format("{} {}", log::cropped_funcsig(__PRETTY_FUNCTION__), std::format(__VA_ARGS__)).c_str())
 #define LOG_FAST(level, msg)                                                                                           \
     if constexpr (ELogLevel_##level < log::DebugLogThreshold)                                                          \
-    G::APIDefs->Log(ELogLevel_##level, ADDON_NAME, msg)
+    G::Log(ELogLevel_##level, ADDON_NAME, msg)
 #else
 #define LOG_DEBUG()                                                                                                    \
-    G::APIDefs->Log(ELogLevel_DEBUG, ADDON_NAME,                                                                       \
-                    std::format("[{}:{}][{}]", __FILE__, __LINE__, log::cropped_funcsig(__PRETTY_FUNCTION__)).c_str())
+    G::Log(ELogLevel_DEBUG, ADDON_NAME,                                                                                \
+           std::format("[{}:{}][{}]", __FILE__, __LINE__, log::cropped_funcsig(__PRETTY_FUNCTION__)).c_str())
 #define LOG(level, ...)                                                                                                \
-    G::APIDefs->Log(ELogLevel_##level, ADDON_NAME,                                                                     \
-                    std::format("{} {}", log::cropped_funcsig(__PRETTY_FUNCTION__), std::format(__VA_ARGS__)).c_str())
-#define LOG_FAST(level, msg) G::APIDefs->Log(ELogLevel_##level, ADDON_NAME, msg)
+    G::Log(ELogLevel_##level, ADDON_NAME,                                                                              \
+           std::format("{} {}", log::cropped_funcsig(__PRETTY_FUNCTION__), std::format(__VA_ARGS__)).c_str())
+#define LOG_FAST(level, msg) G::Log(ELogLevel_##level, ADDON_NAME, msg)
 #endif
