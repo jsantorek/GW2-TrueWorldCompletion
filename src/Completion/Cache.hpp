@@ -17,6 +17,10 @@ class CompletionCache
   public:
     CompletionCache(const AddonAPI::PathsVT &);
     ~CompletionCache();
+    CompletionCache(CompletionCache &&) = delete;
+    CompletionCache(const CompletionCache &) = delete;
+    CompletionCache &operator=(const CompletionCache &) = delete;
+    CompletionCache &operator=(CompletionCache &&) = delete;
     std::optional<LocalizedCompletionStore<TWC::CompletionValue>> GetCompletion(std::string_view);
     void Refresh();
     void Update();

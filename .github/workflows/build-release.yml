@@ -20,6 +20,7 @@ jobs:
       with:
         submodules: 'recursive'
         token: ${{ secrets.RE_REPO_ACCESS_TOKEN }}
+        fetch-tags: true
 
     - name: Pull Docker image
       run: docker pull ghcr.io/jsantorek/gw2-addon-builder:latest

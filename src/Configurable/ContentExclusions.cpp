@@ -24,7 +24,7 @@
 
 namespace
 {
-auto NoError = "";
+constexpr auto NoError = "";
 template <TWC::ContentType T>
 void ListExcludedContent(TWC::ContentContainer<TWC::ContentRecordSet> &exclusions,
                          TWC::ContentContainer<TWC::ContentRecordVector> &candidates)

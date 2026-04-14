@@ -6,6 +6,7 @@
 #include <array>
 #include <cstdint>
 #include <imgui.h>
+#include <limits>
 #include <magic_enum/magic_enum.hpp>
 #include <magic_enum/magic_enum_containers.hpp>
 #include <nlohmann/json.hpp>
@@ -16,16 +17,18 @@ namespace
 {
 consteval auto rgb(uint8_t r, uint8_t g, uint8_t b)
 {
-    return std::array<float, 4>{static_cast<float>(r) / 255.f, static_cast<float>(g) / 255.f,
-                                static_cast<float>(b) / 255.f, 1.f};
+    return std::array<float, 4>{static_cast<float>(r) / static_cast<float>(std::numeric_limits<uint8_t>::max()),
+                                static_cast<float>(g) / static_cast<float>(std::numeric_limits<uint8_t>::max()),
+                                static_cast<float>(b) / static_cast<float>(std::numeric_limits<uint8_t>::max()), 1.f};
 }
+constexpr auto CeilByte = 255.5f;
 constexpr auto convert(std::array<float, 4> rgba)
 {
     auto col = GW2RE::Colour4{};
-    col.R = static_cast<uint8_t>(std::clamp(rgba[0], 0.0f, 1.0f) * 255.0f + 0.5f);
-    col.G = static_cast<uint8_t>(std::clamp(rgba[1], 0.0f, 1.0f) * 255.0f + 0.5f);
-    col.B = static_cast<uint8_t>(std::clamp(rgba[2], 0.0f, 1.0f) * 255.0f + 0.5f);
-    col.A = static_cast<uint8_t>(std::clamp(rgba[3], 0.0f, 1.0f) * 255.0f + 0.5f);
+    col.R = static_cast<uint8_t>(std::clamp(rgba[0], 0.0f, 1.0f) * CeilByte);
+    col.G = static_cast<uint8_t>(std::clamp(rgba[1], 0.0f, 1.0f) * CeilByte);
+    col.B = static_cast<uint8_t>(std::clamp(rgba[2], 0.0f, 1.0f) * CeilByte);
+    col.A = static_cast<uint8_t>(std::clamp(rgba[3], 0.0f, 1.0f) * CeilByte);
     return col;
 }
 constexpr auto GameDefaultColour = rgb(49, 139, 188);
