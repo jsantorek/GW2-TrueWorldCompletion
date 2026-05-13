@@ -1,5 +1,5 @@
 #include "Converter.hpp"
-#include "Constant/Undisclosed.hpp"
+#include "Constant/UndisclosedMapping.hpp"
 #include "Content/Identifier.hpp"
 #include "Content/Record.hpp"
 #include "Content/Type.hpp"
@@ -19,7 +19,8 @@
 #include <unordered_map>
 #include <utility>
 
-std::unordered_map<uint16_t, uint16_t> *TWC::Converter<TWC::ContentType::RenownHeart>::ProgressionMapping = nullptr;
+std::unique_ptr<std::unordered_map<uint16_t, uint16_t>>
+    TWC::Converter<TWC::ContentType::RenownHeart>::ProgressionMapping = nullptr;
 
 TWC::Record<TWC::ContentType::RenownHeart> TWC::Converter<TWC::ContentType::RenownHeart>::Serialize(
     const Identifier<ContentType::RenownHeart> &id)
@@ -29,10 +30,7 @@ TWC::Record<TWC::ContentType::RenownHeart> TWC::Converter<TWC::ContentType::Reno
 
 void TWC::Converter<TWC::ContentType::RenownHeart>::Populate(const DataAccessor &data)
 {
-    if (ProgressionMapping)
-        ProgressionMapping->clear();
-    else
-        ProgressionMapping = new std::unordered_map<uint16_t, uint16_t>{};
+    ProgressionMapping = std::make_unique<std::unordered_map<uint16_t, uint16_t>>();
     for (auto task : data.GetAll<GW2RE::TaskSubRegionCommonDef_t>())
     {
         ProgressionMapping->emplace(static_cast<uint16_t>(task->ID),
@@ -42,8 +40,7 @@ void TWC::Converter<TWC::ContentType::RenownHeart>::Populate(const DataAccessor 
 
 void TWC::Converter<TWC::ContentType::RenownHeart>::Clear()
 {
-    delete ProgressionMapping;
-    ProgressionMapping = nullptr;
+    ProgressionMapping.reset();
 }
 
 TWC::Identifier<TWC::ContentType::RenownHeart> TWC::Converter<TWC::ContentType::RenownHeart>::Deserialize(
@@ -60,14 +57,17 @@ TWC::Identifier<TWC::ContentType::RenownHeart> TWC::Converter<TWC::ContentType::
     return {};
 }
 
+magic_enum::containers::array<TWC::Expansion, uint16_t>
+    TWC::Converter<TWC::ContentType::HeroChallenge>::ProgressionMapping =
+        ConstantUndisclosedMapping::GetHeroChallengeProgression();
+
 TWC::Record<TWC::ContentType::HeroChallenge> TWC::Converter<TWC::ContentType::HeroChallenge>::Serialize(
     const Identifier<ContentType::HeroChallenge> &id)
 {
-    constexpr auto Mapping = ConstantUndisclosed::HeroChallengeProgressionMapping;
-    auto it = std::find(Mapping.begin(), Mapping.end(), id.ProgressID);
-    if (it == Mapping.end())
+    auto it = std::find(ProgressionMapping.begin(), ProgressionMapping.end(), id.ProgressID);
+    if (it == ProgressionMapping.end())
         return {};
-    return std::format("{}-{}", std::distance(Mapping.begin(), it), id.Bit);
+    return std::format("{}-{}", std::distance(ProgressionMapping.begin(), it), id.Bit);
 }
 
 TWC::Identifier<TWC::ContentType::HeroChallenge> TWC::Converter<TWC::ContentType::HeroChallenge>::Deserialize(
@@ -78,16 +78,16 @@ TWC::Identifier<TWC::ContentType::HeroChallenge> TWC::Converter<TWC::ContentType
     const size_t pos = data.find('-');
     if (pos == std::string::npos)
         return {};
-    auto res = std::from_chars(data.data(), data.data() + pos, exp);
+    auto res = std::from_chars(&data[0], &data[pos], exp);
     if (res.ec != std::errc())
         return {};
-    res = std::from_chars(data.data() + pos + 1, data.data() + data.size(), bit);
+    res = std::from_chars(&data[pos + 1], &data[data.size()], bit);
     if (res.ec != std::errc())
         return {};
-    if (exp >= magic_enum::enum_count<Expansion>() || bit > (std::numeric_limits<BitType>::max)())
-        return {};
-    return {
-        .ProgressID = *(ConstantUndisclosed::HeroChallengeProgressionMapping.begin() + exp),
-        .Bit = static_cast<BitType>(bit),
-    };
+    if (auto casted = magic_enum::enum_cast<Expansion>(exp); casted && bit <= (std::numeric_limits<BitType>::max)())
+        return {
+            .ProgressID = ProgressionMapping[*casted],
+            .Bit = static_cast<BitType>(bit),
+        };
+    return {};
 }

@@ -72,6 +72,36 @@ constexpr auto AscalonianCatacombsStory = 33;
 // https://wiki.guildwars2.com/wiki/Ascalonian_Catacombs_(explorable)
 constexpr auto AscalonianCatacombsExplorable = 36;
 
+// https://wiki.guildwars2.com/wiki/Caudecus%27s_Manor_(story)
+constexpr auto CaudecussManorStory = 75;
+
+// https://wiki.guildwars2.com/wiki/Caudecus%27s_Manor_(explorable)
+constexpr auto CaudecussManorExplorable = 76;
+
+// https://wiki.guildwars2.com/wiki/Twilight_Arbor_(story)
+constexpr auto TwilightArborStory = 67;
+
+// https://wiki.guildwars2.com/wiki/Twilight_Arbor_(explorable)
+constexpr auto TwilightArborExplorable = 68;
+
+// https://wiki.guildwars2.com/wiki/Sorrow%27s_Embrace_(story)
+constexpr auto SorrowsEmbraceStory = 63;
+
+// https://wiki.guildwars2.com/wiki/Sorrow%27s_Embrace_(explorable)
+constexpr auto SorrowsEmbraceExplorable = 64;
+
+// https://wiki.guildwars2.com/wiki/Citadel_of_Flame_(story)
+constexpr auto CitadelOfFlameStory = 66;
+
+// https://wiki.guildwars2.com/wiki/Citadel_of_Flame_(explorable)
+constexpr auto CitadelOfFlameExplorable = 69;
+
+// https://wiki.guildwars2.com/wiki/Honor_of_the_Waves_(story)
+constexpr auto HonorOfTheWavesStory = 70;
+
+// https://wiki.guildwars2.com/wiki/Honor_of_the_Waves_(explorable)
+constexpr auto HonorOfTheWavesExplorable = 81;
+
 // https://wiki.guildwars2.com/wiki/Plains_of_Ashford
 constexpr auto PlainsOfAshford = 19;
 

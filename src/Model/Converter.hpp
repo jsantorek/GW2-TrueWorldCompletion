@@ -3,6 +3,8 @@
 #include "Content/Identifier.hpp"
 #include "Content/Record.hpp"
 #include "DataAccessor.hpp"
+#include "Model/Expansion.hpp"
+#include <magic_enum/magic_enum_containers.hpp>
 #include <type_traits>
 #include <unordered_map>
 
@@ -40,13 +42,14 @@ template <> struct Converter<ContentType::RenownHeart>
     static Identifier<ContentType::RenownHeart> Deserialize(const Record<ContentType::RenownHeart> &data);
     static void Populate(const DataAccessor &);
     static void Clear();
-    static std::unordered_map<uint16_t, uint16_t> *ProgressionMapping;
+    static std::unique_ptr<std::unordered_map<uint16_t, uint16_t>> ProgressionMapping;
 };
 
 template <> struct Converter<ContentType::HeroChallenge>
 {
     static Record<ContentType::HeroChallenge> Serialize(const Identifier<ContentType::HeroChallenge> &id);
     static Identifier<ContentType::HeroChallenge> Deserialize(const Record<ContentType::HeroChallenge> &data);
+    static magic_enum::containers::array<Expansion, uint16_t> ProgressionMapping;
 };
 
 } // namespace TWC
