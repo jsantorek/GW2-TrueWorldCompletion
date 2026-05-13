@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: Checkout repository with submodules
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6s
       with:
         submodules: 'recursive'
         token: ${{ secrets.RE_REPO_ACCESS_TOKEN }}
