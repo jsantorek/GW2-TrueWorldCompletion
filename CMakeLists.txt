@@ -8,7 +8,7 @@ execute_process(
     OUTPUT_VARIABLE GIT_DESCRIBE_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-if(${GIT_DESCRIBE_VERSION})
+if(GIT_DESCRIBE_VERSION)
     string(REGEX REPLACE "^v" "" PROJECT_VERSION ${GIT_DESCRIBE_VERSION})
     string(REGEX REPLACE "-dirty" ".1" PROJECT_VERSION ${PROJECT_VERSION})
     message("Git describe based versioning: ${PROJECT_VERSION}")
@@ -27,8 +27,9 @@ else()
     message("Timestamp based versioning: ${PROJECT_VERSION}")
 endif()
 
-project(TrueWorldCompletion VERSION ${PROJECT_VERSION} LANGUAGES C CXX)
-message("${PROJECT_NAME} v${PROJECT_VERSION}")
+get_filename_component(PROJECT_NAME "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
+string(REGEX REPLACE "^[^-]+-" "" PROJECT_NAME "${PROJECT_NAME}")
+project(${PROJECT_NAME} VERSION ${PROJECT_VERSION} LANGUAGES C CXX)
 
 find_package(rcgg-nexus-api)
 find_package(imgui)
@@ -59,14 +60,15 @@ target_compile_definitions(${PROJECT_NAME}
         ADDON_VERSION_REVISION=$<IF:$<BOOL:${PROJECT_VERSION_TWEAK}>,${PROJECT_VERSION_TWEAK},0>
         ADDON_NAME="${PROJECT_NAME}"
         ADDON_ACRONYM="${PROJECT_ACRONYM}"
-        _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 )
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${RE_INCLUDE_DIRS}
 )
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "True_World_Completion")
+string(REGEX REPLACE "([a-z0-9])([A-Z])" "\\1_\\2" PROJECT_FILENAME "${PROJECT_NAME}")
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_FILENAME})
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION "."
 )
+message("${PROJECT_NAME} v${PROJECT_VERSION} ${PROJECT_FILENAME}.dll")

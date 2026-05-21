@@ -148,6 +148,9 @@ constexpr auto DragonBallArena = 911;
 constexpr auto AspectArena = 918;
 constexpr auto TheCrownPavilion = 929;
 
+// https://wiki.guildwars2.com/wiki/Hub
+constexpr auto SuperAdventureBoxHub = 935;
+
 // https://wiki.guildwars2.com/wiki/Mistlock_Sanctuary
 constexpr auto MistlockSanctuary = 1206;
 

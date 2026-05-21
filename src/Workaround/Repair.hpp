@@ -49,6 +49,8 @@ constexpr auto GetFestival(uint32_t MapId) -> Festival
         return Festival::Halloween;
     case ConstantMapIdentifier::DragonBallArena:
         return Festival::LunarNewYear;
+    case ConstantMapIdentifier::SuperAdventureBoxHub:
+        return Festival::SuperAdventureBox;
     case ConstantMapIdentifier::AspectArena:
     case ConstantMapIdentifier::LabyrinthineCliffs:
     case ConstantMapIdentifier::TheCrownPavilion:

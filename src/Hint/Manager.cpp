@@ -87,6 +87,24 @@ void TWC::HintManager::RequestHint()
         {
             SendAlert("This character seems to have discovered everything"); /* TODO */
         }
+        auto priotization = [](const MapDefinition &m1, const MapDefinition &m2) {
+            auto category = [](GW2RE::EMapType t) {
+                if (t == GW2RE::EMapType::Public)
+                    return 0;
+                if (t == GW2RE::EMapType::Instance)
+                    return 2;
+                return 1;
+            };
+
+            const int c1 = category(m1.Definition->Type);
+            const int c2 = category(m2.Definition->Type);
+
+            if (c1 != c2)
+                return c1 < c2;
+
+            return m1.Definition->ID < m2.Definition->ID;
+        };
+        std::sort(incomplete.begin(), incomplete.end(), std::move(priotization));
         LOG(INFO, "Identified {} incomplete maps", incomplete.size());
         Hint->SetIncompleteMaps(incomplete);
         Stale = false;
