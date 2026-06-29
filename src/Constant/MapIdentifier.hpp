@@ -182,4 +182,7 @@ constexpr auto Falooaloo = 850;
 constexpr auto VerdantBrinkClone = 1042;
 
 constexpr auto BastionOfThePenitentLabel = 1186;
+
+// https://wiki.guildwars2.com/wiki/Seitung_Province
+constexpr auto SeitungProvince = 1442;
 } // namespace TWC::ConstantMapIdentifier
