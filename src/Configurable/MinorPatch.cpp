@@ -1,5 +1,6 @@
 #include "imgui.h"
 #include <Configurable/MinorPatch.hpp>
+#include <Text/Utilities.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <magic_enum/magic_enum_containers.hpp>
 #include <string_view>
@@ -23,7 +24,7 @@ magic_enum::containers::array<TWC::ConfigurableMinorPatch, std::string_view> TWC
     MakePatchNames()
 {
     auto names = magic_enum::containers::array<ConfigurableMinorPatch, std::string_view>{};
-    names.fill(""); /* TODO */
+    names.fill(TextUtilities::Uninitialized);
     names[TWC::ConfigurableMinorPatch::DiscoveryAlerts] =
         "Loading screen of all maps with discoverable content present displays completion progress values";
     names[ConfigurableMinorPatch::LoadingScreens] =

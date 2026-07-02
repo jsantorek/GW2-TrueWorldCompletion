@@ -2,6 +2,7 @@
 #include "Configurable/Colour.hpp"
 #include "Model/Continent.hpp"
 #include "Model/Expansion.hpp"
+#include <Text/Utilities.hpp>
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -59,7 +60,7 @@ magic_enum::containers::array<TWC::ConfigurableColour, std::string_view> TWC::Co
     MakeColourNames()
 {
     auto names = magic_enum::containers::array<ConfigurableColour, std::string_view>{};
-    names.fill(""); /* TODO */
+    names.fill(TextUtilities::Uninitialized);
     names[ConfigurableColour::Legendary] = "Legendary";
     names[ConfigurableColour::Reward] = "Reward";
     names[ConfigurableColour::Continent_Mists] = "Continent: Mists";

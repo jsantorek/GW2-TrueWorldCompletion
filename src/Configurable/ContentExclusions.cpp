@@ -10,6 +10,7 @@
 #include "Map/Entity.hpp"
 #include "Map/Features.hpp"
 #include "Model/Converter.hpp"
+#include <Text/Utilities.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <format>
@@ -156,7 +157,7 @@ magic_enum::containers::array<TWC::ConfigurableExclusionReason, std::string_view
     MakeExclusionNames()
 {
     auto names = magic_enum::containers::array<ConfigurableExclusionReason, std::string_view>{};
-    names.fill(""); /* TODO */
+    names.fill(TextUtilities::Uninitialized);
     names[ConfigurableExclusionReason::Historical] = "Historical/retired content which is no longer unlockable";
     names[ConfigurableExclusionReason::Exclusive_Gemstore] =
         "Content accessible exclusively through use of gemstore items";

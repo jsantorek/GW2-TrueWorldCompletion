@@ -77,6 +77,7 @@ void AddonLoad(AddonAPI *aApi)
     ImGui::SetCurrentContext(reinterpret_cast<ImGuiContext *>(aApi->ImguiContext));
     ImGui::SetAllocatorFunctions(reinterpret_cast<void *(*)(size_t, void *)>(aApi->ImguiMalloc),
                                  reinterpret_cast<void (*)(void *, void *)>(aApi->ImguiFree));
+    TWC::TextLocalization::Initialize(aApi->Localization);
     try
     {
         G::Hooks = std::make_unique<TWC::HooksManager>(aApi->MinHook);
@@ -109,7 +110,6 @@ void AddonLoad(AddonAPI *aApi)
     G::Hooks->EnableOptionalHooks();
     LOG_FAST(INFO, "Hooking and patching done");
     TWC::Options::SetupConfiguration(aApi->Renderer, aApi->Paths);
-    TWC::TextLocalization::Initialize(aApi->Localization);
     TWC::Options::Load()->Apply();
 
 #ifndef NDEBUG

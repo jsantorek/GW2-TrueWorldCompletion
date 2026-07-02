@@ -40,6 +40,10 @@ void TWC::HintApiLink::SetIncompleteMaps(std::span<MapDefinition> ids)
         }
     }
     Url = oss.str();
+    if (!Url.empty())
+    {
+        Url.pop_back();
+    }
 }
 
 bool TWC::HintApiLink::Available()

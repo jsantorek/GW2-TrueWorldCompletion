@@ -16,6 +16,9 @@
 #include "Model/Continent.hpp"
 #include "Model/Expansion.hpp"
 #include "Style/Definition.hpp"
+#include "Text/Localization.hpp"
+#include "Text/Tag.hpp"
+#include "Text/Utilities.hpp"
 #include <Logging.hpp>
 #include <cstdint>
 #include <format>
@@ -25,19 +28,6 @@
 #include <string_view>
 #include <tuple>
 #include <utility>
-
-namespace
-{
-auto constexpr UnknownCharacterValue = "--";
-auto constexpr String_LegendaryWorldCompletion = "Legendary World Completion";
-auto constexpr String_CompletionRewards = "Completion Rewards";
-auto constexpr String_GiftOfExploration = "Gift of Exploration";
-auto constexpr String_ContinentName = "TODO: Continent";
-auto constexpr String_ExpansionName = "TODO: Expansion";
-auto constexpr String_DataMissing = "data unavailable";
-auto constexpr String_UnknownWorld = "Unknown World Completion";
-
-} // namespace
 
 void TWC::StyleManager::Update(const ConfigurableColourPalette &colours, ConfigurableExpansionAssignment assignment,
                                ConfigurableWorldCompletion completion, const ConfigurableTextFormat &format)
@@ -154,14 +144,15 @@ TWC::StyleDefinition::CharacterProgress TWC::StyleManager::GetCharacterProgress(
         if (CharacterProgressTooltip.IsCustomized())
             style.Tooltip =
                 std::format("True World Completion<br> <br>{}<br>{}:", SerializeCompletionProgress(value.value()),
-                            String_GiftOfExploration);
+                            TextLocalization::FetchDescription<TextTag::GiftOfExploration>());
     }
     else
     {
-        style.Text = UnknownCharacterValue;
+        style.Text = TextUtilities::Uncached;
         if (CharacterProgressTooltip.IsCustomized())
             style.Tooltip = std::format("True World Completion<br> <br>{} {}!<br>{}:", characterName,
-                                        String_DataMissing, String_GiftOfExploration);
+                                        TextLocalization::FetchDescription<TextTag::CharacterUncachedExplanation>(),
+                                        TextLocalization::FetchDescription<TextTag::GiftOfExploration>());
     }
     if (style.Tooltip)
     {
@@ -219,11 +210,14 @@ std::string TWC::StyleManager::SerializeCompletionProgress(const LocalizedComple
         }
         str.append("<br>");
     };
-    appendLine(LegendaryColour, store.Legendary, String_LegendaryWorldCompletion);
-    appendLine(RewardColour, store.Reward, String_CompletionRewards);
-    for (const auto &[value, name] : magic_enum::enum_entries<Expansion>())
+    appendLine(LegendaryColour, store.Legendary,
+               TextLocalization::FetchDescription<ConfigurableWorldCompletion::AllMapsCollectively>());
+    appendLine(RewardColour, store.Reward,
+               TextLocalization::FetchDescription<ConfigurableWorldCompletion::AllMapsWithCompletionReward>());
+    for (const auto &value : magic_enum::enum_values<Expansion>())
     {
-        appendLine(ExpansionColours[value], store.Expansions[value], name);
+        appendLine(ExpansionColours[value], store.Expansions[value],
+                   TextLocalization::FetchDescription<ConfigurableWorldCompletion::CurrentExpansionMapsOnly>(value));
     }
     return str;
 }
@@ -233,13 +227,17 @@ std::tuple<GW2RE::Colour4, std::string> TWC::StyleManager::GetCurrentWorldColour
     switch (Completion)
     {
     case ConfigurableWorldCompletion::AllMapsCollectively:
-        return {LegendaryColour, String_LegendaryWorldCompletion};
+        return {LegendaryColour,
+                TextLocalization::FetchDescription<ConfigurableWorldCompletion::AllMapsCollectively>()};
     case ConfigurableWorldCompletion::AllMapsWithCompletionReward:
-        return {RewardColour, String_CompletionRewards};
+        return {RewardColour,
+                TextLocalization::FetchDescription<ConfigurableWorldCompletion::AllMapsWithCompletionReward>()};
     case ConfigurableWorldCompletion::CurrentContinentMapsOnly: {
         if (auto dscr = MapDescriptor::FromCurrentMap())
         {
-            return {ContinentColours[dscr->GetContinent()], String_ContinentName};
+            const auto cont = dscr->GetContinent();
+            return {ContinentColours[cont],
+                    TextLocalization::FetchDescription<ConfigurableWorldCompletion::CurrentContinentMapsOnly>(cont)};
         }
         break;
     }
@@ -247,9 +245,11 @@ std::tuple<GW2RE::Colour4, std::string> TWC::StyleManager::GetCurrentWorldColour
     case ConfigurableWorldCompletion::CurrentExpansionMapsOnly:
         if (auto dscr = MapDescriptor::FromCurrentMap())
         {
-            return {GetExpansionColour(dscr.value()), String_ExpansionName};
+            return {GetExpansionColour(dscr.value()),
+                    TextLocalization::FetchDescription<ConfigurableWorldCompletion::CurrentExpansionMapsOnly>(
+                        dscr->GetExpansion<ConfigurableExpansionAssignment::AccessabilityBased>())};
         }
         break;
     }
-    return {UnknownColour, String_UnknownWorld};
+    return {UnknownColour, TextUtilities::Unidentified};
 }

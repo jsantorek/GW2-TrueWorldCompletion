@@ -14,8 +14,8 @@ struct HintMapRecenter : public HintInterface
     virtual void Activate() override;
     virtual bool Available() override;
 
-    std::vector<GW2RE::MapDef_t *> Incomplete;
-    std::vector<GW2RE::MapDef_t *>::const_iterator Next;
+    std::vector<const GW2RE::MapDef_t *> Incomplete;
+    std::vector<const GW2RE::MapDef_t *>::const_iterator Next;
     std::shared_ptr<ThreadService> Thread;
 };
 } // namespace TWC

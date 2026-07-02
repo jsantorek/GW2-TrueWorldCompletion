@@ -19,6 +19,7 @@ class HintManager
     std::unique_ptr<HintInterface> Hint;
     bool Stale{};
     std::mutex Mutex;
+    ALERTS_NOTIFY SendAlert;
     std::chrono::time_point<std::chrono::system_clock> LastActivation;
 };
 } // namespace TWC

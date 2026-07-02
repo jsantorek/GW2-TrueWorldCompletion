@@ -11,6 +11,7 @@
 #include "Style/Manager.hpp"
 #include <Logging.hpp>
 #include <Nexus.h>
+#include <Text/Utilities.hpp>
 #include <exception>
 #include <filesystem>
 #include <format>
@@ -129,7 +130,7 @@ magic_enum::containers::array<TWC::ConfigurableExpansionAssignment, std::string_
     MakeAssignmentNames()
 {
     auto names = magic_enum::containers::array<ConfigurableExpansionAssignment, std::string_view>{};
-    names.fill(""); /* TODO */
+    names.fill(TextUtilities::Uninitialized);
     names[ConfigurableExpansionAssignment::AccessabilityBased] =
         "Maps accessible to core accounts are not assigned to any expansion";
     names[ConfigurableExpansionAssignment::ChronologyBased] =
@@ -140,7 +141,7 @@ magic_enum::containers::array<TWC::ConfigurableExpansionAssignment, std::string_
 magic_enum::containers::array<TWC::ConfigurableIncompleteMapHint, std::string_view> TWC::Options::MakeHintNames()
 {
     auto names = magic_enum::containers::array<ConfigurableIncompleteMapHint, std::string_view>{};
-    names.fill(""); /* TODO */
+    names.fill(TextUtilities::Uninitialized);
     names[ConfigurableIncompleteMapHint::AllOpenedInApiLink] = "All incomplete maps are opened through GW2 API link";
     names[ConfigurableIncompleteMapHint::OneOpenedInWiki] = "One incomplete map is searched for by id in GW2 Wiki";
     names[ConfigurableIncompleteMapHint::OneCenteredOnWorldMap] = "In-game map is centered on one incomplete map";
@@ -149,7 +150,7 @@ magic_enum::containers::array<TWC::ConfigurableIncompleteMapHint, std::string_vi
 magic_enum::containers::array<TWC::ConfigurableWorldCompletion, std::string_view> TWC::Options::MakeCompletionNames()
 {
     auto names = magic_enum::containers::array<ConfigurableWorldCompletion, std::string_view>{};
-    names.fill(""); /* TODO */
+    names.fill(TextUtilities::Uninitialized);
     names[ConfigurableWorldCompletion::AllMapsCollectively] = "Legendary: All content accounted for together";
     names[ConfigurableWorldCompletion::AllMapsWithCompletionReward] =
         "Reward: All content required for map completion rewards";

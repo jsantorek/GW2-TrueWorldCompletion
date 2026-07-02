@@ -19,13 +19,11 @@ namespace
 {
 constexpr auto MinimumActivationDelay =
     std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(2));
-
-ALERTS_NOTIFY SendAlert = nullptr;
 } // namespace
 
-TWC::HintManager::HintManager(const AddonAPI::UIVT &ui) : LastActivation(std::chrono::system_clock::now())
+TWC::HintManager::HintManager(const AddonAPI::UIVT &ui)
+    : LastActivation(std::chrono::system_clock::now()), SendAlert(ui.SendAlert)
 {
-    SendAlert = ui.SendAlert;
 }
 
 void TWC::HintManager::MarkStale()
@@ -74,7 +72,8 @@ void TWC::HintManager::RequestHint()
             auto content = G::Cache::Content->GetMapContent(def);
             if (!content)
             {
-                continue; /* TODO */
+                LOG(CRITICAL, "MapDefinition#{} present but its missing content!", def.Definition->ID);
+                continue;
             }
             if (content->AnyOf<ContentType::Vista>(isIncomplete) ||
                 content->AnyOf<ContentType::PointOfInterest>(isIncomplete) ||
@@ -85,26 +84,29 @@ void TWC::HintManager::RequestHint()
         }
         if (incomplete.empty())
         {
-            SendAlert("This character seems to have discovered everything"); /* TODO */
+            SendAlert("This character seems to have discovered everything");
         }
-        auto priotization = [](const MapDefinition &m1, const MapDefinition &m2) {
-            auto category = [](GW2RE::EMapType t) {
-                if (t == GW2RE::EMapType::Public)
-                    return 0;
-                if (t == GW2RE::EMapType::Instance)
-                    return 2;
-                return 1;
+        else
+        {
+            auto priotization = [](const MapDefinition &m1, const MapDefinition &m2) {
+                auto category = [](GW2RE::EMapType t) {
+                    if (t == GW2RE::EMapType::Public)
+                        return 0;
+                    if (t == GW2RE::EMapType::Instance)
+                        return 2;
+                    return 1;
+                };
+
+                const int c1 = category(m1.Definition->Type);
+                const int c2 = category(m2.Definition->Type);
+
+                if (c1 != c2)
+                    return c1 < c2;
+
+                return m1.Definition->ID < m2.Definition->ID;
             };
-
-            const int c1 = category(m1.Definition->Type);
-            const int c2 = category(m2.Definition->Type);
-
-            if (c1 != c2)
-                return c1 < c2;
-
-            return m1.Definition->ID < m2.Definition->ID;
-        };
-        std::sort(incomplete.begin(), incomplete.end(), std::move(priotization));
+            std::sort(incomplete.begin(), incomplete.end(), std::move(priotization));
+        }
         LOG(INFO, "Identified {} incomplete maps", incomplete.size());
         Hint->SetIncompleteMaps(incomplete);
         Stale = false;
@@ -112,7 +114,7 @@ void TWC::HintManager::RequestHint()
     const auto now = std::chrono::system_clock::now();
     if (now - LastActivation <= MinimumActivationDelay)
     {
-        LOG(INFO, "Hint spam prevention mechanism");
+        LOG_FAST(INFO, "Hint spam prevention mechanism");
         return;
     }
     if (Hint->Available())
@@ -121,5 +123,5 @@ void TWC::HintManager::RequestHint()
         LastActivation = now;
     }
     else
-        LOG(INFO, "Hint unavailable");
+        LOG_FAST(INFO, "Hint unavailable");
 }

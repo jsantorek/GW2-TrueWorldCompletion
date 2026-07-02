@@ -2,6 +2,7 @@
 
 #include "Configurable/ExpansionAssignment.hpp"
 #include "Filter/Interface.hpp"
+#include "Filter/UserExclusions.hpp"
 #include "Map/Descriptor.hpp"
 #include "Model/Expansion.hpp"
 
@@ -11,7 +12,7 @@ template <ConfigurableExpansionAssignment Assignment> struct FilterExpansion : p
 {
     [[nodiscard]] bool operator()(ContentDescriptor dscr) const override
     {
-        return dscr.Map.GetExpansion<Assignment>() == Expansion;
+        return dscr.Map.GetExpansion<Assignment>() == Expansion && FilterUserExclusions{}(dscr);
     }
     inline FilterExpansion(MapDescriptor map) : Expansion(map.GetExpansion<Assignment>())
     {
@@ -28,7 +29,8 @@ struct FilterSubsequentExpansion : public FilterExpansion<Assignment>
     using FilterExpansion<Assignment>::FilterExpansion;
     [[nodiscard]] bool operator()(ContentDescriptor dscr) const override
     {
-        return dscr.Map.GetExpansion<Assignment>() <= FilterExpansion<Assignment>::Expansion;
+        return dscr.Map.GetExpansion<Assignment>() <= FilterExpansion<Assignment>::Expansion &&
+               FilterUserExclusions{}(dscr);
     }
 };
 } // namespace TWC

@@ -8,7 +8,7 @@ namespace TWC
 template <template <ContentType> typename Collection>
 struct MapEntity : public ContentContainer<Collection>, public MapDefinition
 {
-    MapEntity(GW2RE::MapDef_t *def) : ContentContainer<Collection>(), MapDefinition(def)
+    MapEntity(const GW2RE::MapDef_t *def) : ContentContainer<Collection>(), MapDefinition(def)
     {
     }
 
