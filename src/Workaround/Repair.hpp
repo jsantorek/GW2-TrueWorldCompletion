@@ -38,6 +38,7 @@ constexpr auto GetFestival(uint32_t MapId) -> Festival
 {
     switch (MapId)
     {
+    case ConstantMapIdentifier::ToypocalypseParty:
     case ConstantMapIdentifier::ToypocalypsePublic:
     case ConstantMapIdentifier::SnowballMayhem:
     case ConstantMapIdentifier::TixxsInfinirarium:
